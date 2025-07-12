@@ -18,8 +18,16 @@ namespace PopiEngine::Importer
 		GLenum type;
 	};
 
+	struct texturePathDefinition {
+		string path;
+	};
+
 	extern map<string, vector<shaderPathDefinition>> shaderPaths;
+
+	extern map<string, texturePathDefinition> texturePaths;
 	
 	map<string, vector<shaderPathDefinition>> ImportShaders();
+
+	map<string, texturePathDefinition> ImportTextures();
 	
 }

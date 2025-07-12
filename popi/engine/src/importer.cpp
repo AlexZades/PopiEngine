@@ -1,3 +1,5 @@
+
+
 #include <graphics.h>
 #include <settings.h>
 #include <importer.h>
@@ -12,12 +14,14 @@ using std::string, std::vector, std::map, std::format;
 using namespace PopiEngine::Logging;
 
 /// <summary>
-/// Importer helper functions for popi engine.
+/// Importer handles finding paths to resources the engine will use.
+/// It doesnt actually load any of the resources, just finds them and stores their paths.
 /// </summary>
 namespace PopiEngine::Importer
 {
 
 	map<string, vector<shaderPathDefinition>> shaderPaths = ImportShaders();
+	map<string, texturePathDefinition> texturePaths = ImportTextures();
 
 	/// <summary>
 	/// Loads shader paths from the resources/shaders directory.
@@ -79,5 +83,42 @@ namespace PopiEngine::Importer
 
 	}
 
+	map<string, texturePathDefinition> ImportTextures() {
+
+		map<string, texturePathDefinition> texturePaths;
+
+		//Image file extensions
+		const string validExtentions[] = { ".png", ".jpg"};
+
+		std::cout << "Importing textures from " << RESOURCES_TEXTURES << std::endl;
+
+		//Get file paths,and names of the textures. 
+		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_TEXTURES)) {
+			string path = p.path().string();
+			string ext = p.path().extension().string();
+			string name = p.path().stem().string();
+			for (const auto& validExt : validExtentions) {
+			
+				if (ext == validExt) {
+
+					//If the extension is valid, add the texture to the map
+					texturePathDefinition texturePathDef = { path };
+					if (texturePaths.find(name) == texturePaths.end()) {
+						//Texture name not in map, add it
+						texturePaths[name] = texturePathDef;
+						LogNormal(format("Texture Importer: Found texture: {} at path: {}", name, path));
+					}
+					else {
+						LogWarning(format("Texture Importer: Texture {} already exists, skipping import.", name));
+					}
+				}
+			}
+
+
+		}
+
+		return texturePaths;
+
+	}
 
 }

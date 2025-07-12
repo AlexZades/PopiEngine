@@ -6,5 +6,15 @@
 
 namespace PopiEngine::Terrain
 {
-	
+	struct TerrainFeatures {
+		int xSize = 100; // Size of the terrain in the x direction
+		int ySize = 100; // Size of the terrain in the y direction
+
+		int chunkSize = 128; // Size of each chunk
+	};
+
+	class TerrainGenerator {
+
+
+	};
 }

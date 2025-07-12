@@ -10,6 +10,7 @@
 #include <iostream>
 #include <thread>
 #include <graphics.h>
+#include <camera.h>
 #include <settings.h>
 #include <ui.h>
 #include <project.h>
@@ -47,49 +48,39 @@ namespace PopiEngine {
         uiCore = new UICore(graphicsCore->GetWindow());
 	}
 
-	int Project::Run() {
-		OnStart();
+    int Project::Run() {
+        OnStart();
 
         //Initialize shaders
         auto defaultShaderProgram = InitalizeShader("unlit");
-        /**
-            * Create vertex array and buffers
-           */
-        GLuint vao;
-        glCreateVertexArrays(1, &vao);
+        
+		//Not sure why this is ambiguous??!?
+        auto mainCamera = new PopiEngine::Graphics::Camera(
+            glm::vec3(0.0f, 0.0f, 3.0f), // Position - moved back to see the cube better
+            glm::vec3(0.0f, 1.0f, 0.0f), // Up vector
+            -90.0f, // Yaw
+            0.0f,   // Pitch
+            2.5f,   // Speed
+            0.1f    // Sensitivity
+		);
+		//Link the camera to the graphics core
+        graphicsCore->LinkCamera(
+			std::shared_ptr<PopiEngine::Graphics::Camera>(mainCamera)
+		);
+		Texture test = Texture("Super_Mario", TextureType::DIFFUSE);
+        vector<Texture> textures = { test };
+        graphicsCore->LinkMesh(CreateCube("unlit"));
 
-        glEnableVertexArrayAttrib(vao, 0);
-        glVertexArrayAttribFormat(vao, 0, 2, GL_FLOAT, GL_FALSE,
-            offsetof(glm::vec2, x));
-
-        glVertexArrayAttribBinding(vao, 0, 0);
-
-        glm::vec2 vertices[] = { {-0.2, -0.2}, {-0.2, 0.2}, {0.2, 0.2}, {0.2, -0.2} };
-
-        GLuint vbo;
-        glCreateBuffers(1, &vbo);
-        glNamedBufferStorage(vbo, sizeof(glm::vec2) * 4, vertices,
-            GL_DYNAMIC_STORAGE_BIT);
-
-        std::uint32_t indices[] = { 0, 2, 1, 2, 0, 3 };
-
-        GLuint ibo;
-        glCreateBuffers(1, &ibo);
-        glNamedBufferStorage(ibo, sizeof(std::uint32_t) * 6, indices,
-            GL_DYNAMIC_STORAGE_BIT);
-
-        glBindVertexArray(vao);
-        glVertexArrayVertexBuffer(vao, 0, vbo, 0, sizeof(glm::vec2));
-        glVertexArrayElementBuffer(vao, ibo);
+        //Mesh cube = Mesh()
         defaultShaderProgram->Use();
-        glClearColor(0, 0, 0, 0);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Use float literals to avoid warnings
 
        
         while (!glfwWindowShouldClose(graphicsCore->GetWindow())) {
 			graphicsCore->FrameStart();
 			uiCore->NewFrame();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
             void OnUpdate();
             static bool showDemo = false;
             ImGui::Begin("Example");
@@ -102,7 +93,6 @@ namespace PopiEngine {
             ImGui::Render();
 
 			graphicsCore->Draw();
-			graphicsCore->Clear();
             //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -123,6 +113,7 @@ namespace PopiEngine {
     void Project::OnUpdate() {
         
         uiCore->NewFrame();
+
 	}
 
     void Project::Quit() {

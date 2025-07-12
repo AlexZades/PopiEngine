@@ -13,16 +13,51 @@
 #include <vector>
 #include <map>
 #include <ui.h>
+#include <camera.h>
 using std::string, std::vector, std::map, std::shared_ptr;
 using namespace PopiEngine::UI;	
 /// <summary>
-/// Graphic utilities for PopiEngine.
+/// Graphic utilities for PopiEngine
+/// 
+/// GraphicsCore manages the OpenGL context, window, and rendering loop.
+/// 
+/// Other graphics related classes are also here.
 /// </summary>
 namespace PopiEngine::Graphics
 {
 
+	struct Vertex {
+		glm::vec3 Position;
+		glm::vec3 Normal;
+		glm::vec2 TexCoords;
+	};
+
+	enum TextureType {
+		DIFFUSE,
+		SPECULAR,
+		NORMAL,
+		HEIGHT
+	};
+
+	struct Texture {
+		GLuint id;
+		TextureType type;
+		string path;
+
+		Texture(string _path, TextureType _type);
+		
+	};
 
 
+
+	//General Material Struct
+	//Not sure how to handle multiple materials yet though :(
+	struct Material {
+		glm::vec3 ambient;
+		glm::vec3 diffuse;
+		glm::vec3 specular;
+		float shininess;
+	};
 
 	/// <summary>
 	/// A ShaderProgram Class
@@ -64,6 +99,26 @@ namespace PopiEngine::Graphics
 		GLuint programID = 0;
 		GLuint attachedShaderIDs[2]= {};
 	};
+
+	class Mesh {
+	public:
+		vector<Vertex> vertices;
+		vector<GLuint> indices;
+		vector<Texture> textures;
+
+		std::shared_ptr<ShaderProgram> shaderProgram;
+		GLuint VAO;
+
+		Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures, string shaderProgramName);
+		void Draw();
+
+	private:
+		GLuint  VBO, EBO;
+
+		void InitalizeMesh();
+		void GetTextures();
+	};
+
 	shared_ptr<ShaderProgram> InitalizeShader(string shaderName);
 	/// <summary>
 	/// Vertex = 0, Fragment = 1... Add more as needed
@@ -76,6 +131,9 @@ namespace PopiEngine::Graphics
 		GraphicsCore();
 		~GraphicsCore();
 
+		map<GLuint, std::shared_ptr<Mesh>> activeMeshes;
+		std::shared_ptr<Camera> activeCamera;
+
 		GLFWwindow* GetWindow();
 
 		void InitializeGL();
@@ -86,45 +144,15 @@ namespace PopiEngine::Graphics
 		void Draw();
 		void FrameStart();
 
+		GLuint LinkMesh(std::shared_ptr<Mesh> mesh);
+		void LinkCamera(std::shared_ptr<Camera> camera);
+		
+
 	private:
+
 		GLFWwindow* window = nullptr;
 		UICore* uiCore = nullptr;
 	};
 
-	struct Vertex {
-		glm::vec3 Position;
-		glm::vec3 Normal;
-		glm::vec2 TexCoords;
-	};
-
-	struct Texture {
-		GLuint id;
-		string type;
-		string path;
-	};
-
-	class Mesh {
-	public:
-		vector<Vertex> vertices;
-		vector<GLuint> indices;
-		vector<Texture> textures;
-
-		std::shared_ptr<ShaderProgram> shaderProgram;
-		GLuint VAO;
-		
-		Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures,string shaderProgramName);
-		void Draw();
-
-	private:
-		GLuint  VBO, EBO;
-
-		void InitalizeMesh();
-	};
-
-	struct Material {
-		glm::vec3 ambient;
-		glm::vec3 diffuse;
-		glm::vec3 specular;
-		float shininess;
-	};	
+	std::shared_ptr<Mesh> CreateCube( string shaderProgramName = "unlit");
 }
