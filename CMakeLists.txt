@@ -28,12 +28,13 @@ add_executable(${PROJECT_NAME}
         ${POPI_INCLUDE}/main.h
         ${POPI_INCLUDE}/UI.h
         ${POPI_INCLUDE}/settings.h
- "popi/engine/src/project.cpp" "popi/engine/include/utils.h" "popi/engine/src/utils.cpp" "popi/engine/include/components.h" "popi/engine/src/components.cpp" "popi/engine/include/entity.h" "popi/engine/include/scene.h" "popi/engine/include/terrain.h" "popi/engine/src/terrain.cpp" "popi/engine/include/input.h")
+ "popi/engine/src/project.cpp" "popi/engine/include/utils.h" "popi/engine/src/utils.cpp" "popi/engine/include/components.h" "popi/engine/src/components.cpp" "popi/engine/include/entity.h" "popi/engine/include/scene.h" "popi/engine/include/terrain.h" "popi/engine/src/terrain.cpp" "popi/engine/include/input.h" "popi/engine/include/camera.h" "popi/engine/src/camera.cpp")
 target_include_directories(
         ${PROJECT_NAME}
         PUBLIC
         "popi/engine/include"
         "lib/fastNoiseLite"
+        "lib/stb"
 )
 
 target_link_libraries(
