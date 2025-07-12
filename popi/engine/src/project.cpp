@@ -46,20 +46,12 @@ namespace PopiEngine {
         graphicsCore = new GraphicsCore();
         uiCore = new UICore(graphicsCore->GetWindow());
 	}
+
 	int Project::Run() {
 		OnStart();
 
-        
-
-       
-
-
-
-
-       
-
         //Initialize shaders
-        auto defaultShaderProgram = InitalizeShader(settings.unlitShader);
+        auto defaultShaderProgram = InitalizeShader("unlit");
         /**
             * Create vertex array and buffers
            */

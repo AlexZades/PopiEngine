@@ -35,6 +35,24 @@ namespace PopiEngine::Graphics
 		GLuint GetId();
 
 		void Use();
+
+		//Utils
+		
+		//Basic Setters
+		void setBool(const string& varName, bool value);
+		void setInt(const string& varName, int value);
+		void setFloat(const string& varName, float value);
+
+		//Vector Setters
+		void setVec2(const string& varName, const glm::vec2& value);
+		void setVec3(const string& varName, const glm::vec3& value);
+		void setVec4(const string& varName, const glm::vec4& value);
+
+		//Material Setters
+		void setMat2(const string& varName, const glm::mat2& value);
+		void setMat3(const string& varName, const glm::mat3& value);
+		void setMat4(const string& varName, const glm::mat4& value);
+
 	private:
 		void Attach(string filePath, GLenum shaderType);
 		void Link();
@@ -81,22 +99,26 @@ namespace PopiEngine::Graphics
 
 	struct Texture {
 		GLuint id;
+		string type;
+		string path;
 	};
 
-	/*class Mesh {
+	class Mesh {
 	public:
-		vector<Vertex>       vertices;
-		vector<unsigned int> indices;
-		vector<Texture>      textures;
+		vector<Vertex> vertices;
+		vector<GLuint> indices;
+		vector<Texture> textures;
 
+		std::shared_ptr<ShaderProgram> shaderProgram;
+		GLuint VAO;
 		
-		Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures);
-		void Draw(Shader& shader);
+		Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures,string shaderProgramName);
+		void Draw();
 
 	private:
-		unsigned int VAO, VBO, EBO;
+		GLuint  VBO, EBO;
 
-		void setupMesh();
+		void InitalizeMesh();
 	};
 
 	struct Material {
@@ -104,6 +126,5 @@ namespace PopiEngine::Graphics
 		glm::vec3 diffuse;
 		glm::vec3 specular;
 		float shininess;
-	};*/
-	
+	};	
 }

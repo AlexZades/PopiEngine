@@ -17,7 +17,7 @@
 #include "settings.h"
 #include "ui.h"
 
-using std::string, std::ifstream, std::stringstream,std::format;
+using std::string, std::ifstream, std::stringstream, std::format;
 
 using namespace PopiEngine::Importer;
 using namespace PopiEngine::Logging;
@@ -232,8 +232,101 @@ namespace PopiEngine::Graphics
          return source;
 
      }
+
+     void ShaderProgram::setBool(const string& varName, bool value)
+     {
+		 glUniform1i(glGetUniformLocation(programID, varName.c_str()), (int)value);
+     }
+     void ShaderProgram::setInt(const string& varName, int value) 
+     {
+		 glUniform1i(glGetUniformLocation(programID, varName.c_str()), value);
+     }
+     void ShaderProgram::setFloat(const string& varName, float value)
+     {
+		 glUniform1f(glGetUniformLocation(programID, varName.c_str()), value);
+     }
+
+     //Vector Setters
+     void ShaderProgram::setVec2(const string& varName, const glm::vec2& value)
+     {
+		 glUniform2f(glGetUniformLocation(programID, varName.c_str()), value.x, value.y);
+     }
+     void ShaderProgram::setVec3(const string& varName, const glm::vec3& value)
+     {
+		 glUniform3f(glGetUniformLocation(programID, varName.c_str()), value.x, value.y, value.z);
+     }
+     void ShaderProgram::setVec4(const string& varName, const glm::vec4& value)
+     {
+		 glUniform4f(glGetUniformLocation(programID, varName.c_str()), value.x, value.y, value.z, value.w);
+     }
+
+     //Material Setters
+     void ShaderProgram::setMat2(const string& varName, const glm::mat2& value)
+     {
+		 glUniformMatrix2fv(glGetUniformLocation(programID, varName.c_str()), 1, GL_FALSE, &value[0][0]);
+     }
+     void ShaderProgram::setMat3(const string& varName, const glm::mat3& value)
+     {
+		 glUniformMatrix3fv(glGetUniformLocation(programID, varName.c_str()), 1, GL_FALSE, &value[0][0]);
+     }
+     void ShaderProgram::setMat4(const string& varName, const glm::mat4& value)
+     {
+		 glUniformMatrix4fv(glGetUniformLocation(programID, varName.c_str()), 1, GL_FALSE, &value[0][0]);
+     }
+
 #pragma endregion
 
 
+#pragma region MyRegion
+
+     Mesh::Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, string shaderProgramName) {
+         this->vertices = vertices;
+		 this->indices = indices;
+         this->textures = textures;
+
+         if(shaderPrograms.find(shaderProgramName) == shaderPrograms.end()) {
+			 LogError(format("Invalid Shader Program: {}, has the shader been initalized?", shaderProgramName));
+             return;
+		 }
+         shaderProgram = shaderPrograms[shaderProgramName];
+
+
+		 InitalizeMesh();
+     }
+
+     void Mesh::InitalizeMesh() {
+		 glGenVertexArrays(1, &VAO);
+
+		 glGenBuffers(1, &VBO);
+		 glGenBuffers(1, &EBO);
+
+		 glBindVertexArray(VAO);
+         // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+		 glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+         glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+		 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+     
+		 glEnableVertexAttribArray(0);
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
+
+		 glEnableVertexAttribArray(1);
+		 glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+
+         glEnableVertexAttribArray(2);
+         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+     
+		 glBindVertexArray(0); // Unbind VAO
+     }
+
+     void Mesh::Draw() {
+         shaderProgram->Use();
+	 }
+
+#pragma endregion
+
     
+
 }

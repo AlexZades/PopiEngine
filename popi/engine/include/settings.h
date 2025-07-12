@@ -12,8 +12,9 @@ namespace PopiEngine
 	{  
 		int windowWidth = 1000;  // Default width of the window  
 		int windowHeight = 1000; // Default height of the window  
-		std::string windowName = "PopiEngine"; // Default name of the window  
+		const std::string windowName = "PopiEngine"; // Default name of the window  
 
-		std::string unlitShader = "unlit";
+		const std::string unlitShader = "unlit";
+		const std::string litShader = "lit";
 	};  
 }
