@@ -1,5 +1,4 @@
 #pragma once
-#include "ui.h"  
 #include <chrono>
 #include <glad/gl.h>
 #include <glm/glm.hpp>
@@ -10,8 +9,25 @@
 #include <iostream>
 #include <thread>
 #include <string>	
+#include <vector>
+
+using std::vector, std::shared_ptr, std::string, std::format;
 
 namespace PopiEngine::UI
 {
-	void InitializeImGui(GLFWwindow* window);
+	class UICore {
+	public:
+		UICore(GLFWwindow* window);
+		~UICore();
+		void InitializeImGui();
+
+		void NewFrame();
+
+		GLFWwindow* _window;
+	};
+
+	struct UIElement {
+		
+	};
+
 }

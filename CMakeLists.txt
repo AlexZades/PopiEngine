@@ -48,6 +48,8 @@ string(REGEX MATCH "([0-9]+$)" BUILD_NUMBER "${CURRENT_VERSION}")
 math(EXPR NEW_BUILD_NUMBER "${BUILD_NUMBER} + 1")
 string(REGEX REPLACE "([0-9]+$)" "${NEW_BUILD_NUMBER}" NEW_VERSION "${CURRENT_VERSION}")
 file(WRITE "${CMAKE_SOURCE_DIR}/${RESOURCES}/ver" "${NEW_VERSION}")
+
+
 #Copy resources to the build directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
                    COMMAND ${CMAKE_COMMAND} -E copy_directory

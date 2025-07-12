@@ -41,25 +41,25 @@ namespace PopiEngine {
             LogError(format("Failed to read version file: {}", e.what()));
 		}
 		LogNormal("ぽっぴ Engine is Starting! O=('-'Q)");
+
+		//Initialize cores
         graphicsCore = new GraphicsCore();
+        uiCore = new UICore(graphicsCore->GetWindow());
 	}
 	int Project::Run() {
 		OnStart();
 
         
 
-        glfwSwapInterval(1);
-        PopiEngine::UI::InitializeImGui(graphicsCore->GetWindow());
+       
 
 
 
 
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEBUG_OUTPUT);
-        glDebugMessageCallback(message_callback, nullptr);
+       
 
         //Initialize shaders
-		auto defaultShaderProgram = InitalizeShader(settings.unlitShader);
+        auto defaultShaderProgram = InitalizeShader(settings.unlitShader);
         /**
             * Create vertex array and buffers
            */
@@ -92,15 +92,13 @@ namespace PopiEngine {
         defaultShaderProgram->Use();
         glClearColor(0, 0, 0, 0);
 
+       
         while (!glfwWindowShouldClose(graphicsCore->GetWindow())) {
-            glfwPollEvents();
+			graphicsCore->FrameStart();
+			uiCore->NewFrame();
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-
-            ImGui_ImplOpenGL3_NewFrame();
-            ImGui_ImplGlfw_NewFrame();
-            ImGui::NewFrame();
-
+            void OnUpdate();
             static bool showDemo = false;
             ImGui::Begin("Example");
             if (ImGui::Button("Show/Hide ImGui demo"))
@@ -110,12 +108,10 @@ namespace PopiEngine {
                 ImGui::ShowDemoWindow(&showDemo);
 
             ImGui::Render();
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-            glfwSwapBuffers(graphicsCore->GetWindow());
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			graphicsCore->Draw();
+			graphicsCore->Clear();
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         OnQuit();
@@ -126,21 +122,15 @@ namespace PopiEngine {
 
     void Project::OnQuit() {
         LogNormal("ぽっぴ Engine is Closing! (・_・;)");
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
-        ImGui::DestroyContext();
 
-        glfwDestroyWindow(graphicsCore->GetWindow());
-		
-        glfwTerminate();
-
-        //Cleanup
+		//Cleanup (be careful with order of deletion)
+        delete uiCore;
         delete graphicsCore;
 	}
 
     void Project::OnUpdate() {
         
-		//This Runs every frame
+        uiCore->NewFrame();
 	}
 
     void Project::Quit() {

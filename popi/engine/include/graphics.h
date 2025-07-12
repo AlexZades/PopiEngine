@@ -12,8 +12,9 @@
 #include <string>	
 #include <vector>
 #include <map>
+#include <ui.h>
 using std::string, std::vector, std::map, std::shared_ptr;
-
+using namespace PopiEngine::UI;	
 /// <summary>
 /// Graphic utilities for PopiEngine.
 /// </summary>
@@ -62,12 +63,14 @@ namespace PopiEngine::Graphics
 		void InitializeGL();
 		GLFWwindow* InitializeWindow(int H, int V, string windowName);
 
+		void SetUiCore(UICore* _uiCore);
 		void Clear();
 		void Draw();
+		void FrameStart();
 
 	private:
 		GLFWwindow* window = nullptr;
-
+		UICore* uiCore = nullptr;
 	};
 
 	struct Vertex {
