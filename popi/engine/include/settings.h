@@ -2,7 +2,7 @@
 #include <string>  
 
 static const char* RESOURCES_SHADERS = "./resources/shaders";
-
+static const char* RESOURCES = "./resources";
 namespace PopiEngine  
 {  
 	/// <summary>  
@@ -14,7 +14,6 @@ namespace PopiEngine
 		int windowHeight = 1000; // Default height of the window  
 		std::string windowName = "PopiEngine"; // Default name of the window  
 
-		std::string defaultVertexShader = "unlit.vert";
-		std::string defaultFragmentShader = "unlit.frag";
+		std::string unlitShader = "unlit";
 	};  
 }
