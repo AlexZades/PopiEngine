@@ -11,6 +11,8 @@ namespace PopiEngine
 	/// </summary>  
 	struct Settings  
 	{  
+		
+		bool editorMode = true; 
 		int windowWidth = 1000;  // Default width of the window  
 		int windowHeight = 1000; // Default height of the window  
 		const std::string windowName = "PopiEngine"; // Default name of the window  

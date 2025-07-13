@@ -44,10 +44,9 @@ namespace PopiEngine::ECS {
     class EntityManager {
     public:
         
-        EntityManager() {
-			vector < std::shared_ptr<Entity>> entities = vector<std::shared_ptr<Entity>>();
-		
-        
-        }
+        EntityManager();
+
+        std::shared_ptr<Entity> InstatiateEntity(string name);
+		void DestroyEntity(std::shared_ptr<Entity> entity);
     };
 }

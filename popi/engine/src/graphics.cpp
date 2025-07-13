@@ -32,17 +32,54 @@ using namespace PopiEngine::ECS;
 using namespace PopiEngine::UI;
 namespace PopiEngine::Graphics 
 {
+    // Definition of the global variable
+    GraphicsCore* activeGraphicsCore = nullptr;
+    
+#pragma region Callbacks
+    void ResizeCallback(GLFWwindow* window, int width, int height) {
+        glViewport(0, 0, width, height);
+        LogNormal(std::format("Resized window to {}x{}", width, height));
+
+        activeGraphicsCore->windowWidth = width;
+        activeGraphicsCore->windowHeight = height;
+    }
+    void ResizeFramebuffer(GLFWwindow* window, int width, int height) {
+        // This function is called when the framebuffer size changes
+        glViewport(0, 0, width, height);
+        LogNormal(std::format("Resized framebuffer to {}x{}", width, height));
+        activeGraphicsCore->windowWidth = width;
+        activeGraphicsCore->windowHeight = height;
+	}
+#pragma endregion
+
+
 #pragma region Graphics Core
-    GraphicsCore::GraphicsCore() {
+    GraphicsCore::GraphicsCore(bool enableEditorMode) {
+		editorMode = enableEditorMode;
         LogNormal("Initializing Graphics Core");
+        activeGraphicsCore = this;
+		windowHeight = settings.windowHeight;
+		windowWidth = settings.windowWidth;
+		windowName = settings.windowName;
+
+        if(editorMode)
+			windowName = "PopiEngine Editor";
 
         InitializeGL();
+
+        if(editorMode)
+			InitalizeFrameBuffer();
     }
     GraphicsCore::~GraphicsCore() {
         glfwDestroyWindow(window);
 
         glfwTerminate();
     }
+
+    GLuint GraphicsCore::GetEditorTexture() {
+        return editorTexture;
+    }
+
     void GraphicsCore::SetUiCore(UICore* _uiCore) {
 		uiCore = _uiCore;
 	}
@@ -51,9 +88,10 @@ namespace PopiEngine::Graphics
         LogNormal("Initializing OpenGL...");
         if (!glfwInit())
             LogError("Error initializing glfw");
-        Settings settings;
-        window = InitializeWindow(settings.windowWidth, settings.windowHeight, settings.windowName);
-
+        
+        window = InitializeWindow(windowWidth, windowHeight, windowName);
+        glfwSetWindowUserPointer(window, this); // Set the user pointer to the current instance
+		glfwSetFramebufferSizeCallback(window, ResizeCallback);
         if (!gladLoaderLoadGL())
             LogError("Error initializing glad");
 
@@ -117,6 +155,9 @@ namespace PopiEngine::Graphics
         return window; // Return the created window  
     }
 
+   
+
+
     GLFWwindow* GraphicsCore::GetWindow() {
         return window;
     }
@@ -127,30 +168,37 @@ namespace PopiEngine::Graphics
 
     void GraphicsCore::FrameStart(){
         glfwPollEvents();
-       
+        if (editorMode) {
+            glBindFramebuffer(GL_FRAMEBUFFER, editorFBO);
+            glViewport(0, 0, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight);
+			Clear(); // Clear the framebuffer before drawing
+        }
 	}
     /// <summary>
 	/// Renders all entites with a MeshRenderer component.
     /// </summary>
     void GraphicsCore::RenderEntities(glm::mat4 proj, glm::mat4 view) 
     {
-        for(const auto& entityPtr : entities) {  
+        for (const auto& entityPtr : entities) {
             auto entity = entityPtr.get();
-			//Check if we we should render this entity
+            //Check several conditions to see if we should render the entity
             if (entity != nullptr &&
                 entity->isActive &&
-                entity->GetActiveComponents() & ActiveComponents::MESH_RENDERER);
+                entity->GetActiveComponents() & ActiveComponents::MESH_RENDERER) {
+				
                 Transform* transform = nullptr;
                 //If the as a transform component, we apply its transformation
                 if (entity->GetActiveComponents() & ActiveComponents::TRANSFORM) {
                     transform = entity->transform.get();
                 }
                 else {
-                    transform = new Transform();
+                    Transform* defaultTransform = new Transform();
+                    transform = defaultTransform;
                 }
-                auto meshRenderer = entity->meshRenderer;
-				//Get the mesh based on the meshID in the MeshRenderer component
+                auto& meshRenderer = entity->meshRenderer;
+                //Get the mesh based on the meshID in the MeshRenderer component
                 if (meshRenderer && activeMeshes.find(meshRenderer->meshID) != activeMeshes.end()) {
+					
                     auto mesh = activeMeshes[meshRenderer->meshID];
                     if (mesh) {
                         glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
@@ -165,16 +213,27 @@ namespace PopiEngine::Graphics
                     }
                 }
             }
+        }
                 
      }  
 
     void GraphicsCore::Draw() {
 		//Code to draw the scene goes here
-        Clear(); // Clear before drawing, not after
+        if (!editorMode) {
+            Clear(); // Clear main window if not in editor mode
+        }
  
+        // Calculate aspect ratio based on current mode
+        float aspectRatio;
+        if (editorMode) {
+            aspectRatio = (float)editorViewportWidth / (float)editorViewportHeight;
+        } else {
+            aspectRatio = (float)windowWidth / (float)windowHeight;
+        }
+        
         glm::mat4 projection = glm::perspective(
-            glm::radians(70.0f), // Field of view in radians
-            800.0f / 800.0f,     // Aspect ratio
+            glm::radians(70.0f), 
+            aspectRatio,         // Use calculated aspect ratio
             0.1f,                // Near clipping plane
             100.0f               // Far clipping plane
         );
@@ -183,9 +242,84 @@ namespace PopiEngine::Graphics
         
 		RenderEntities(projection, view); //The actual drawing is done in here
 
+
+        if (editorMode) {
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, windowWidth, windowHeight);
+        }
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
+
     }
+
+
+    void GraphicsCore::InitalizeFrameBuffer() {
+        editorViewportWidth = 400.0f;  // Set a default size
+        editorViewportHeight = 400.0f;
+        
+        glGenFramebuffers(1, &editorFBO);
+        glBindFramebuffer(GL_FRAMEBUFFER, editorFBO);
+
+		glGenTextures(1, &editorTexture);
+
+        glBindTexture(GL_TEXTURE_2D, editorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, editorTexture, 0);
+
+        glGenRenderbuffers(1, &editorRBO);
+        glBindRenderbuffer(GL_RENDERBUFFER, editorRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, editorRBO);
+        
+        // Check framebuffer completeness
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            LogError("Editor framebuffer is not complete!");
+        } else {
+            LogNormal("Editor framebuffer initialized successfully");
+        }
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    }
+
+    void GraphicsCore::ResizeEditorViewport(float width, float height) {
+        editorViewportWidth = width;
+        editorViewportHeight = height;
+        
+		// Bind the framebuffer first before modifying its attachments
+        glBindFramebuffer(GL_FRAMEBUFFER, editorFBO);
+        
+        glBindTexture(GL_TEXTURE_2D, editorTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, editorTexture, 0);
+        
+        glBindRenderbuffer(GL_RENDERBUFFER, editorRBO);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, editorRBO);
+    
+        // Check framebuffer completeness
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            LogError("Editor framebuffer is not complete after resize!");
+        }
+        
+        // Unbind everything
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        
+        LogNormal(std::format("Resized Editor Viewport to {}x{}", width, height));
+	}
+
+
 #pragma endregion
 
         
@@ -440,8 +574,9 @@ namespace PopiEngine::Graphics
              switch (type) {
              case DIFFUSE:
                  number = std::to_string(diffuse++);
-				 name = "material.DIFFUSE";
+				 name = "DIFFUSE";
                  break;
+             //Add when you finish the shader
              case SPECULAR:
                  number = std::to_string(specular++);
                  name = "material.SPECULAR";

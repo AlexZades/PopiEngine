@@ -16,15 +16,14 @@ namespace PopiEngine::ECS {
 #pragma region Entity
 	Entity::Entity(string _name) {
 		name = _name;
-		LogNormal(std::format("Creating entity: {}", name));
 	}
 
 	Entity::~Entity() {
-		LogNormal(std::format("Destroying entity: {}", name));
 		//Cleanup components
 		transform.reset();
 		meshRenderer.reset();
 		directionalLight.reset();
+		
 	}
 #pragma region  attachMethods
 	void Entity::AttachTransform() {
@@ -69,6 +68,23 @@ namespace PopiEngine::ECS {
 		attachedComponents = static_cast<ActiveComponents>(components);
 		return attachedComponents;
 	}	
+#pragma endregion
+
+#pragma region EntityManager
+
+	EntityManager::EntityManager() {
+		LogNormal("Initializing Entity Manager");
+		entities = vector<std::shared_ptr<Entity>>();
+	}
+	std::shared_ptr<Entity> EntityManager::InstatiateEntity(string name) {
+		auto entity = std::make_shared<Entity>(name);
+		entities.push_back(entity);
+		LogNormal(std::format("Instantiated entity: {}", name));
+		return entity;
+	}
+	void EntityManager::DestroyEntity(std::shared_ptr<Entity> entity) {
+	//Implement Later
+	}
 #pragma endregion
 
 }

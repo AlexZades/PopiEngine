@@ -1,6 +1,7 @@
 .vs/
 out/
 build/
+_deps/
 # Prerequisites
 *.d
 

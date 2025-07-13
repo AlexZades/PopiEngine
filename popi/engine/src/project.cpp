@@ -32,7 +32,7 @@ using std::string, std::runtime_error, std::format, std::ifstream, std::stringst
 
 namespace PopiEngine {
 
-
+    std::shared_ptr<Entity> testEntity;
 
     void Project::OnStart(){
         try {
@@ -47,8 +47,10 @@ namespace PopiEngine {
 		LogNormal("ぽっぴ Engine is Starting! O=('-'Q)");
 
 		//Initialize cores
-        graphicsCore = new GraphicsCore();
+        graphicsCore = new GraphicsCore(settings.editorMode);
+		entityManager = new EntityManager(); //Initiaize Before UI Core
         uiCore = new UICore(graphicsCore->GetWindow());
+
 	}
 
     int Project::Run() {
@@ -74,9 +76,18 @@ namespace PopiEngine {
         vector<Texture> textures = { test };
         auto meshId = graphicsCore->LinkMesh(CreateCube("unlit"));
 
-        auto etest = Entity("Cube");
-		etest.AttachTransform();
-        etest.AttachMesh(meshId);
+        testEntity = entityManager->InstatiateEntity("TestEntity");
+        testEntity->AttachTransform();
+        testEntity->AttachMesh(meshId);
+
+        auto meshId2 = graphicsCore->LinkMesh(CreateCube("unlit"));
+        auto testEntity2 = entityManager->InstatiateEntity("TestEntity");
+		auto pos = std::make_shared<Transform>(
+            glm::vec3(2.0f, 0.0f, 0.0f),
+            glm::vec3(0.0f,0.0f,45.0f),
+            glm::vec3(0.5f,0.5f,2.0f));
+        testEntity2->AttachTransform(pos);
+        testEntity2->AttachMesh(meshId2);
         //Mesh cube = Mesh()
      
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Use float literals to avoid warnings
@@ -85,17 +96,11 @@ namespace PopiEngine {
         while (!glfwWindowShouldClose(graphicsCore->GetWindow())) {
 			graphicsCore->FrameStart();
 			uiCore->NewFrame();
-            
+            if(settings.editorMode)
+				OnEditorUpdate();
             //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-            void OnUpdate();
-            static bool showDemo = false;
-            ImGui::Begin("Example");
-            if (ImGui::Button("Show/Hide ImGui demo"))
-                showDemo = !showDemo;
-            ImGui::End();
-            if (showDemo)
-                ImGui::ShowDemoWindow(&showDemo);
+            OnUpdate();
 
             ImGui::Render();
 
@@ -109,6 +114,15 @@ namespace PopiEngine {
 
 	}
 
+    void Project::OnEditorUpdate() {
+        uiCore->DrawEditor(graphicsCore->GetEditorTexture());
+    }
+
+    void Project::OnFixedUpdate() {
+        //Fixed update logic can go here
+        //Currently not used
+	}
+
     void Project::OnQuit() {
         LogNormal("ぽっぴ Engine is Closing! (・_・;)");
 
@@ -118,10 +132,8 @@ namespace PopiEngine {
 	}
 
     void Project::OnUpdate() {
-        
-        uiCore->NewFrame();
-
-	}
+        testEntity->transform.get()->rotation.x += 0.4f;
+    }
 
     void Project::Quit() {
         OnQuit();

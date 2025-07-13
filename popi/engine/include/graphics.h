@@ -14,6 +14,7 @@
 #include <map>
 #include <ui.h>
 #include <camera.h>
+#include <settings.h>
 using std::string, std::vector, std::map, std::shared_ptr;
 using namespace PopiEngine::UI;	
 /// <summary>
@@ -128,32 +129,53 @@ namespace PopiEngine::Graphics
 	class GraphicsCore {
 
 	public:
-		GraphicsCore();
+		GraphicsCore(bool enableEditorMode = false);
 		~GraphicsCore();
 
 		map<GLuint, std::shared_ptr<Mesh>> activeMeshes;
 		std::shared_ptr<Camera> activeCamera;
 
-		GLFWwindow* GetWindow();
+
+		Settings settings = Settings();
+
+		string windowName = "";
+		int windowWidth = 0;
+		int windowHeight = 0;
+		bool editorMode;
 
 		void InitializeGL();
-		GLFWwindow* InitializeWindow(int H, int V, string windowName);
-
 		void SetUiCore(UICore* _uiCore);
 		void Clear();
 		void Draw();
 
 		void FrameStart();
-
+		GLFWwindow* InitializeWindow(int H, int V, string windowName);
+		GLFWwindow* GetWindow();
 		GLuint LinkMesh(std::shared_ptr<Mesh> mesh);
 		void LinkCamera(std::shared_ptr<Camera> camera);
-		
 
+		//Editor specific methods
+		GLuint GetEditorTexture();
+		void ResizeEditorViewport(float width, float height);
+
+		float editorViewportWidth = 400.0f;
+		float editorViewportHeight = 400.0f;
 	private:
+		GLuint editorFBO = 0;
+		GLuint editorRBO = 0;
+		GLuint editorTexture = 0;
+
+
 		void RenderEntities(glm::mat4 proj, glm::mat4 view);
+
+		//These are used for the edtiror
+		void InitalizeFrameBuffer();
+		
 		GLFWwindow* window = nullptr;
 		UICore* uiCore = nullptr;
 	};
 
+	void ResizeCallback(GLFWwindow* window, int width, int height);
+	extern GraphicsCore* activeGraphicsCore; //Thhis is terrible please fix it later
 	std::shared_ptr<Mesh> CreateCube(string shaderProgramName);
 }
