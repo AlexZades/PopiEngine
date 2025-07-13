@@ -23,6 +23,7 @@
 #include <entity.h>
 #include <components.h>
 #include <glm/gtx/euler_angles.hpp>
+#include <importer.h>
 
 using std::string, std::ifstream, std::stringstream, std::format;
 
@@ -575,6 +576,30 @@ namespace PopiEngine::Graphics
 		 InitalizeMesh();
      }
 
+     Mesh::Mesh(string name, vector<Texture> textures, string shaderProgramName)
+     {
+
+         if (meshPaths.find(name) == meshPaths.end()) {
+             LogError(format("Invalid Mesh: {}", name));
+             return;
+         }
+         auto& pathDef = meshPaths[name];
+		 this->name = name;
+		 this->path = pathDef.path;
+         this->vertices = pathDef.vertices;
+         this->indices = pathDef.indices;
+         this->textures = textures;
+
+         if (shaderPrograms.find(shaderProgramName) == shaderPrograms.end()) {
+             LogError(format("Invalid Shader Program: {}, has the shader been initalized?", shaderProgramName));
+             return;
+         }
+         shaderProgram = shaderPrograms[shaderProgramName];
+
+
+         InitalizeMesh();
+     }
+
      void Mesh::InitalizeMesh() {
 		 glGenVertexArrays(1, &VAO);
 
@@ -684,6 +709,7 @@ Texture::Texture(string name, TextureType type) {
 	LogNormal(std::format("Loaded texture: {} with id: {}", path, id));
     stbi_image_free(data);
 }
+
 #pragma endregion
 // Add this function to create a default cube
 std::shared_ptr<Mesh> CreateCube(string shaderProgramName) {

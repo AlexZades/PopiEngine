@@ -41,6 +41,8 @@ target_include_directories(
         "popi/engine/include"
         "lib/fastNoiseLite"
         "lib/stb"
+        "lib/json"
+        "lib/tiny_obj_loader"
 )
 
 target_link_libraries(

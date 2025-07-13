@@ -4,6 +4,7 @@
 static const char* RESOURCES_SHADERS = "./resources/shaders";
 static const char* RESOURCES = "./resources";
 static const char* RESOURCES_TEXTURES = "./resources/textures";
+static const char* RESOURCES_MESHES = "./resources/mesh";
 namespace PopiEngine  
 {  
 	/// <summary>  

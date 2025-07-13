@@ -15,8 +15,10 @@
 #include <ui.h>
 #include <camera.h>
 #include <settings.h>
+#include <importer.h>
 using std::string, std::vector, std::map, std::shared_ptr;
 using namespace PopiEngine::UI;	
+using namespace PopiEngine::Importer;
 /// <summary>
 /// Graphic utilities for PopiEngine
 /// 
@@ -46,7 +48,6 @@ namespace PopiEngine::Graphics
 		string path;
 
 		Texture(string _path, TextureType _type);
-		
 	};
 
 
@@ -107,10 +108,14 @@ namespace PopiEngine::Graphics
 		vector<GLuint> indices;
 		vector<Texture> textures;
 
+		string path = ""; //Path to the mesh file, if applicable
+		string name = ""; //Name of the mesh, if applicable
+
 		std::shared_ptr<ShaderProgram> shaderProgram;
 		GLuint VAO;
 
 		Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures, string shaderProgramName);
+		Mesh(string name, vector<Texture> textures, string shaderProgramName);
 		void Draw(glm::mat4 model, glm::mat4 view, glm::mat4 proj);
 
 	private:

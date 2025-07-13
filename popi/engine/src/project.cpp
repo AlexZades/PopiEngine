@@ -18,6 +18,7 @@
 #include <components.h>
 #include <utils.h>
 #include <fstream>
+#include <tiny_obj_loader.h>
 using namespace PopiEngine::Graphics;
 using namespace PopiEngine::UI;
 using namespace PopiEngine::ECS;

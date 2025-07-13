@@ -1,5 +1,3 @@
-
-
 #include <graphics.h>
 #include <settings.h>
 #include <importer.h>
@@ -8,6 +6,10 @@
 #include <map>
 #include <filesystem>
 #include <utils.h>
+#include <scene.h>
+
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 namespace fs = std::filesystem;
 using namespace PopiEngine::Graphics;
 using std::string, std::vector, std::map, std::format;
@@ -22,7 +24,7 @@ namespace PopiEngine::Importer
 
 	map<string, vector<shaderPathDefinition>> shaderPaths = ImportShaders();
 	map<string, texturePathDefinition> texturePaths = ImportTextures();
-
+	map<string, meshPathDefinition> meshPaths = ImportMeshes();
 	/// <summary>
 	/// Loads shader paths from the resources/shaders directory.
 	/// 
@@ -121,4 +123,106 @@ namespace PopiEngine::Importer
 
 	}
 
+	map<string, meshPathDefinition> ImportMeshes()
+	{
+		map<string, meshPathDefinition> meshPaths;
+
+		const string validExtentions[] = { ".obj"};
+
+		std::cout << "Importing models from " << RESOURCES_MESHES << std::endl;
+
+		//Get file paths,and names of the meshes. 
+		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_MESHES)) {
+			string path = p.path().string();
+			string ext = p.path().extension().string();
+			string name = p.path().stem().string();
+			for (const auto& validExt : validExtentions) {
+				if (ext == validExt) {
+
+					//If the extension is valid, add the mesh to the map
+					meshPathDefinition meshPathDef = { path, ModelType::OBJ };
+					if (meshPaths.find(name) == meshPaths.end()) {
+						if(meshPathDef.type == ModelType::OBJ) {
+							//Load the mesh using the OBJ loader
+							ObjLoader(&meshPathDef);
+						}
+						else {
+							LogError(format("Mesh Importer: Unsupported mesh type for {}.", name));
+							continue;
+						}
+						meshPaths[name] = meshPathDef;
+					}
+					else {
+						LogWarning(format("Texture Importer: Texture {} already exists, skipping import.", name));
+					}
+				}
+			}
+		}
+		
+		return map<string, meshPathDefinition>();
+	}
+
+	void ObjLoader(meshPathDefinition* meshDefinition) {
+		LogNormal(format("Loading OBJ file from path: {}", meshDefinition->path));
+		tinyobj::attrib_t attrib;
+		vector<tinyobj::shape_t> shapes;
+		vector<tinyobj::material_t> materials;
+		string  error;
+	
+		bool success = tinyobj::LoadObj(&attrib, &shapes, &materials, &error, meshDefinition->path.c_str());
+
+		if (!success) {
+			LogError(format("Failed to load OBJ file: {}", error));
+		} 
+
+		std::vector<Vertex> vertices;
+		std::vector<GLuint> indices;
+		//Thank you professor for the code êΩÇ…ä¥é”ÇµÇƒÇ®ÇËÇ‹Ç∑ÅB
+
+		for (int s = 0; s < shapes.size(); s++) {
+			const tinyobj::mesh_t& mesh = shapes[s].mesh;
+			for (int i = 0; i < mesh.indices.size(); i++) {
+				const tinyobj::index_t& index = mesh.indices[i];
+
+				glm::vec3 position(0.0f, 0.0f, 0.0f);
+				glm::vec3 normal(0.0f, 0.0f, 0.0f);
+				glm::vec2 texcoord(0.0f, 0.0f); // Default texture coordinates
+				if (index.vertex_index >= 0) {
+					position =
+						glm::vec3(attrib.vertices[index.vertex_index * 3 + 0], attrib.vertices[index.vertex_index * 3 + 1],
+							attrib.vertices[index.vertex_index * 3 + 2]);
+				}
+
+				if (index.normal_index >= 0) {
+					normal =
+						glm::vec3(attrib.normals[index.normal_index * 3 + 0], attrib.normals[index.normal_index * 3 + 1],
+							attrib.normals[index.normal_index * 3 + 2]);
+				}
+				if (index.texcoord_index >= 0) {
+					texcoord.x = attrib.texcoords[2 * size_t(index.texcoord_index) + 0];
+					texcoord.y = attrib.texcoords[2 * size_t(index.texcoord_index) + 1];
+				}
+	
+				const Vertex vertex(position, normal, texcoord);
+
+				indices.push_back(vertices.size());
+				vertices.push_back(vertex);
+			}
+		}
+
+		meshDefinition->indices = indices;
+		meshDefinition->vertices = vertices;
+
+	}
+	
+	
+	void Scene::Load(string name) {
+		LogNormal("Loading scene...");
+	}
+
+	void Scene::Save(string name) {
+		// Save the scene to a file or other destination
+		// This is a placeholder for actual saving logic
+		LogNormal("Saving scene...");
+	}
 }
