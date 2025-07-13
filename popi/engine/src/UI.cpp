@@ -141,7 +141,9 @@ namespace PopiEngine::UI
 		ImGui::EndChild();
 		ImGui::End();
 	}
-
+	/// <summary>
+	/// Draw the inspector for the currently selected entity.
+	/// </summary>
 	void UICore::DrawInspector() {
 		//Safety check
 		if (selectedEntityIndex < 0 || selectedEntityIndex >= entities.size()) {
@@ -150,8 +152,16 @@ namespace PopiEngine::UI
 		auto& entity = entities[selectedEntityIndex];
 		ActiveComponents activeComponents = entity->GetActiveComponents();
 		ImGui::Begin("Inspector");
+
+		//Check which components are active and draw their gizmos
 		if(activeComponents & TRANSFORM) {
 			TransformGizmo(entity->transform);
+		}
+		if(activeComponents & MESH_RENDERER) {
+			MeshRendererGizmo(entity->meshRenderer);
+		}
+		if(activeComponents & CAMERA) {
+			CameraGizmo(entity->camera);
 		}
 
 		ImGui::End();
@@ -167,6 +177,48 @@ namespace PopiEngine::UI
 		ImGui::InputFloat3("Rotation", glm::value_ptr(transform->rotation));
 		ImGui::InputFloat3("Scale", glm::value_ptr(transform->scale));
 	}
+
+	void UICore::MeshRendererGizmo(std::shared_ptr<MeshRenderer> meshRenderer)
+	{
+		ImGui::SeparatorText("Mesh Renderer");
+		if (meshRenderer) {
+			ImGui::Text("Mesh ID: %u", meshRenderer->meshID);
+			auto mesh = activeGraphicsCore->activeMeshes[meshRenderer->meshID];
+			if(!mesh) {
+				ImGui::Text("Mesh not found!");
+				return;
+			}
+			if (mesh->textures.size() > 0) {
+				if (ImGui::TreeNode("Texture")) {
+					for (const auto meshTexture : mesh->textures) {
+						ImGui::Text("Texture: %s", meshTexture.path.c_str());
+						ImGui::Image((ImTextureID)meshTexture.id, ImVec2(64, 64));
+					}
+					ImGui::TreePop();
+				}
+			}
+			if (mesh->shaderProgram) {
+				ImGui::Text(format("Shader [{}]: {}",mesh->shaderProgram->GetId(), mesh->shaderProgram->name).c_str());
+				//Add more shader properties if needed
+			}
+			else {
+				ImGui::Text("No Shader Program linked to this mesh!");
+			}
+			
+			
+		}
+	}
+
+	void UICore::CameraGizmo(std::shared_ptr<ECS::Camera> camera)
+	{
+	ImGui::SeparatorText("Camera");
+		if (camera) {
+			ImGui::Text("Mode: %s", camera->mode == PERSPECTIVE ? "Perspective" : "Orthographic");
+			ImGui::InputFloat("FOV", &camera->fov);
+		}
+
+	}
+
 #pragma endregion
 
 

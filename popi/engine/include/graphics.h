@@ -67,7 +67,7 @@ namespace PopiEngine::Graphics
 	public:
 		ShaderProgram(string shaderName);
 		~ShaderProgram();
-
+		string name;
 		GLuint GetId();
 
 		void Use();
@@ -96,7 +96,7 @@ namespace PopiEngine::Graphics
 
 		string LoadSource(const string& filepath);
 
-		string name;
+		
 		GLuint programID = 0;
 		GLuint attachedShaderIDs[2]= {};
 	};
@@ -133,7 +133,7 @@ namespace PopiEngine::Graphics
 		~GraphicsCore();
 
 		map<GLuint, std::shared_ptr<Mesh>> activeMeshes;
-		std::shared_ptr<Camera> activeCamera;
+		std::shared_ptr<Entity> activeCamera;
 
 
 		Settings settings = Settings();
@@ -148,11 +148,13 @@ namespace PopiEngine::Graphics
 		void Clear();
 		void Draw();
 
+		std::shared_ptr<Entity> GetActiveCamera();
+
 		void FrameStart();
 		GLFWwindow* InitializeWindow(int H, int V, string windowName);
 		GLFWwindow* GetWindow();
 		GLuint LinkMesh(std::shared_ptr<Mesh> mesh);
-		void LinkCamera(std::shared_ptr<Camera> camera);
+		void LinkCamera(std::shared_ptr<Entity> camera);
 
 		//Editor specific methods
 		GLuint GetEditorTexture();
@@ -168,6 +170,8 @@ namespace PopiEngine::Graphics
 
 		void RenderEntities(glm::mat4 proj, glm::mat4 view);
 
+		glm::mat4 CalulateViewMatrix(std::shared_ptr<Entity> cameraEntity);
+
 		//These are used for the edtiror
 		void InitalizeFrameBuffer();
 		
@@ -177,5 +181,8 @@ namespace PopiEngine::Graphics
 
 	void ResizeCallback(GLFWwindow* window, int width, int height);
 	extern GraphicsCore* activeGraphicsCore; //Thhis is terrible please fix it later
+
+	//Primative Mesh Creation Functions
 	std::shared_ptr<Mesh> CreateCube(string shaderProgramName);
+	std::shared_ptr<Mesh> CreateCube(string shaderProgramName, vector<Texture> textures);
 }

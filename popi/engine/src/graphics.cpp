@@ -123,7 +123,7 @@ namespace PopiEngine::Graphics
 	/// Links camera to the Graphics Core.
     /// </summary>
     /// <param name="camera"></param>
-    void GraphicsCore::LinkCamera(std::shared_ptr<Camera> camera) {
+    void GraphicsCore::LinkCamera(std::shared_ptr<Entity> camera) {
         if (camera == nullptr) {
             LogError("Camera seems not to be set, null ptr");
             return;
@@ -238,7 +238,8 @@ namespace PopiEngine::Graphics
             100.0f               // Far clipping plane
         );
         
-        glm::mat4 view = activeCamera->GetViewMatrix();
+		auto cam = GetActiveCamera();
+		glm::mat4 view = CalulateViewMatrix(cam);
         
 		RenderEntities(projection, view); //The actual drawing is done in here
 
@@ -253,6 +254,40 @@ namespace PopiEngine::Graphics
 
     }
 
+    std::shared_ptr<Entity> GraphicsCore::GetActiveCamera() {
+        if (activeCamera == nullptr) {
+            for(const auto& entity : entities) {
+                if (entity.get()->GetActiveComponents() & ActiveComponents::CAMERA) {
+                    activeCamera = entity;
+                    LogNormal(std::format("Found active camera: {}", entity.get()->name));
+                    break;
+                }
+			}
+        }
+
+        return activeCamera;
+	}
+
+    glm::mat4 GraphicsCore::CalulateViewMatrix(std::shared_ptr<Entity> cameraEntity) {
+		auto camera = cameraEntity->camera; 
+		auto transform = cameraEntity->transform;
+        if (camera == nullptr || transform == nullptr) {
+            LogError("Camera or Transform component is null, cannot calculate view matrix");
+            return glm::mat4(1.0f); // Return identity matrix if components are missing
+        }
+        glm::vec3 newFront;
+
+        newFront.x = cos(glm::radians(transform->rotation.y)) * cos(glm::radians(transform->rotation.x));
+        newFront.y = sin(glm::radians(transform->rotation.y));
+        newFront.z = sin(glm::radians(transform->rotation.y)) * cos(glm::radians(transform->rotation.x));
+        glm::vec3 Front = glm::normalize(newFront);
+
+        return glm::lookAt(
+            transform->position, // Camera position
+            transform->position + Front, // Look at point
+            camera->defaultUp // Up vector
+		);
+    }
 
     void GraphicsCore::InitalizeFrameBuffer() {
         editorViewportWidth = 400.0f;  // Set a default size
@@ -266,8 +301,8 @@ namespace PopiEngine::Graphics
         glBindTexture(GL_TEXTURE_2D, editorTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, (GLsizei)editorViewportWidth, (GLsizei)editorViewportHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, editorTexture, 0);
 
@@ -323,8 +358,6 @@ namespace PopiEngine::Graphics
 #pragma endregion
 
         
-
-
 
      map<string, std::shared_ptr<ShaderProgram>> shaderPrograms;
 
@@ -563,7 +596,7 @@ namespace PopiEngine::Graphics
 
      void Mesh::GetTextures() {
          shaderProgram->Use();
-         GLuint diffuse = 1, specular = 1, normal = 1, height = 1;
+         GLuint diffuse = 0, specular = 0, normal = 0, height = 0;
          for (GLuint i = 0; i < textures.size(); i++) {
              glActiveTexture(GL_TEXTURE0 + i);
 
@@ -618,7 +651,7 @@ Texture::Texture(string name, TextureType type) {
     }
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
-
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 	LogNormal(std::format("Loaded texture: {} with id: {}", path, id));
@@ -629,41 +662,41 @@ Texture::Texture(string name, TextureType type) {
 std::shared_ptr<Mesh> CreateCube(string shaderProgramName) {
     // Cube vertices with Position, Normal, and Texture Coordinates
     vector<Vertex> vertices = {
-        // Front face
+        // Front face (facing +Z)
         {{-0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 0.0f}},
         {{ 0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 0.0f}},
         {{ 0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 1.0f}},
         {{-0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 1.0f}},
 
-        // Back face
-        {{-0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}},
+        // Back face (facing -Z)
         {{ 0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 0.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}},
         {{-0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}},
 
-        // Left face
+        // Left face (facing -X)
         {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 0.0f}},
         {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 0.0f}},
         {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 1.0f}},
         {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 1.0f}},
 
-        // Right face
-        {{ 0.5f, -0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}},
+        // Right face (facing +X)
         {{ 0.5f, -0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}},
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}},
         {{ 0.5f,  0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}},
 
-        // Top face
-        {{-0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}},
+        // Top face (facing +Y)
         {{-0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
+        {{-0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}},
 
-        // Bottom face
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}}
+        // Bottom face (facing -Y)
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}},
+        {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}}
     };
 
     // Cube indices (two triangles per face)
@@ -686,5 +719,62 @@ std::shared_ptr<Mesh> CreateCube(string shaderProgramName) {
     // Create and return the mesh
     return std::make_shared<Mesh>(vertices, indices, textures, shaderProgramName);
 }
+std::shared_ptr<Mesh> CreateCube(string shaderProgramName, vector<Texture> textures) {
+    // Cube vertices with Position, Normal, and Texture Coordinates
+    vector<Vertex> vertices = {
+        // Front face (facing +Z)
+        {{-0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 0.0f}},
+        {{ 0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 0.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 1.0f}},
+        {{-0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 1.0f}},
 
+        // Back face (facing -Z)
+        {{ 0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}},
+        {{-0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 1.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}},
+
+        // Left face (facing -X)
+        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 0.0f}},
+        {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 0.0f}},
+        {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 1.0f}},
+        {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 1.0f}},
+
+        // Right face (facing +X)
+        {{ 0.5f, -0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f, -0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}},
+
+        // Top face (facing +Y)
+        {{-0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
+        {{-0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}},
+
+        // Bottom face (facing -Y)
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}},
+        {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}},
+        {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}},
+        {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}}
+    };
+
+    // Cube indices (two triangles per face)
+    vector<GLuint> indices = {
+        // Front face
+        0, 1, 2,   2, 3, 0,
+        // Back face
+        4, 5, 6,   6, 7, 4,
+        // Left face
+        8, 9, 10,  10, 11, 8,
+        // Right face
+        12, 13, 14, 14, 15, 12,
+        // Top face
+        16, 17, 18, 18, 19, 16,
+        // Bottom face
+        20, 21, 22, 22, 23, 20
+    };
+    // Create and return the mesh
+    return std::make_shared<Mesh>(vertices, indices, textures, shaderProgramName);
+}
 }

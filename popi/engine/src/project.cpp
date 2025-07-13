@@ -59,29 +59,23 @@ namespace PopiEngine {
         //Initialize shaders
         auto defaultShaderProgram = InitalizeShader("unlit");
         
-		//Not sure why this is ambiguous??!?
-        auto mainCamera = new PopiEngine::Graphics::Camera(
-            glm::vec3(0.0f, 0.0f, 3.0f), // Position - moved back to see the cube better
-            glm::vec3(0.0f, 1.0f, 0.0f), // Up vector
-            -90.0f, // Yaw
-            0.0f,   // Pitch
-            2.5f,   // Speed
-            0.1f    // Sensitivity
-		);
-		//Link the camera to the graphics core
-        graphicsCore->LinkCamera(
-			std::shared_ptr<PopiEngine::Graphics::Camera>(mainCamera)
-		);
-		Texture test = Texture("Super_Mario", TextureType::DIFFUSE);
-        vector<Texture> textures = { test };
-        auto meshId = graphicsCore->LinkMesh(CreateCube("unlit"));
+        //Link the camera to the entity manager
+        auto cameraEntity = entityManager->InstatiateEntity("Main Camera");
+        cameraEntity->AttachCamera();
+        cameraEntity->AttachTransform();
+		graphicsCore->LinkCamera(cameraEntity);
 
-        testEntity = entityManager->InstatiateEntity("TestEntity");
+		Texture test = Texture("Planks", TextureType::DIFFUSE);
+        vector<Texture> textures = { test };
+        auto meshId = graphicsCore->LinkMesh(CreateCube("unlit", textures));
+
+        testEntity = entityManager->InstatiateEntity("Cube");
         testEntity->AttachTransform();
         testEntity->AttachMesh(meshId);
-
-        auto meshId2 = graphicsCore->LinkMesh(CreateCube("unlit"));
-        auto testEntity2 = entityManager->InstatiateEntity("TestEntity");
+        Texture test3 = Texture("Metal plates 2", TextureType::DIFFUSE);
+        vector<Texture> textures3 = { test3 };
+        auto meshId2 = graphicsCore->LinkMesh(CreateCube("unlit",textures3));
+        auto testEntity2 = entityManager->InstatiateEntity("Cube Long");
 		auto pos = std::make_shared<Transform>(
             glm::vec3(2.0f, 0.0f, 0.0f),
             glm::vec3(0.0f,0.0f,45.0f),

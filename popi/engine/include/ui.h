@@ -34,6 +34,8 @@ namespace PopiEngine::UI
 		void UpdateEntites();
 		//Inspector gizmo draw calls
 		void TransformGizmo(std::shared_ptr<Transform> transform);
+		void MeshRendererGizmo(std::shared_ptr<MeshRenderer> meshRenderer);
+		void CameraGizmo(std::shared_ptr<ECS::Camera> camera);
 	};
 
 	struct UIElement {

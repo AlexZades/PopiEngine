@@ -19,6 +19,9 @@ namespace PopiEngine::ECS {
         std::shared_ptr<Transform> transform;
         std::shared_ptr<MeshRenderer> meshRenderer;
         std::shared_ptr<DirectionalLight> directionalLight;
+		std::shared_ptr<PointLight> pointLight;
+		std::shared_ptr<Camera> camera;
+		std::shared_ptr<ProceduralTerrain> proceduralTerrain;
 
         Entity(string _name = "entity");
         ~Entity();
@@ -31,6 +34,12 @@ namespace PopiEngine::ECS {
         void AttachMesh(GLuint meshID);
         void AttachDirectionalLight();
         void AttachDirectionalLight(std::shared_ptr<DirectionalLight> dl);
+        void AttachPointLight();
+		void AttachPointLight(std::shared_ptr<PointLight> pl);
+		void AttachCamera();
+		void AttachCamera(std::shared_ptr<Camera> camera);
+		void AttachProceduralTerrain();
+		void AttachProceduralTerrain(std::shared_ptr<ProceduralTerrain> pt);
 		//Bit mask to check which components are active
 #pragma endregion
         ActiveComponents GetActiveComponents();

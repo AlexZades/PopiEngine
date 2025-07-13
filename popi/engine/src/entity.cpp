@@ -55,6 +55,30 @@ namespace PopiEngine::ECS {
 		directionalLight = dl;
 		LogNormal(std::format("Attaching DirectionalLight to entity: {}", name));
 	}	
+	void Entity::AttachPointLight() {
+		pointLight = std::make_shared<PointLight>();
+		LogNormal(std::format("Attaching PointLight to entity: {}", name));
+	}
+	void Entity::AttachPointLight(std::shared_ptr<PointLight> pl) {
+		pointLight = pl;
+		LogNormal(std::format("Attaching PointLight to entity: {}", name));
+	}
+	void Entity::AttachCamera() {
+		camera = std::make_shared<Camera>();
+		LogNormal(std::format("Attaching Camera to entity: {}", name));
+	}
+	void Entity::AttachCamera(std::shared_ptr<Camera> cam) {
+		camera = cam;
+		LogNormal(std::format("Attaching Camera to entity: {}", name));
+	}
+	void Entity::AttachProceduralTerrain() {
+		proceduralTerrain = std::make_shared<ProceduralTerrain>();
+		LogNormal(std::format("Attaching ProceduralTerrain to entity: {}", name));
+	}
+	void Entity::AttachProceduralTerrain(std::shared_ptr<ProceduralTerrain> pt) {
+		proceduralTerrain = pt;
+		LogNormal(std::format("Attaching ProceduralTerrain to entity: {}", name));
+	}
 
 #pragma endregion
 	ActiveComponents Entity::GetActiveComponents() {
@@ -65,6 +89,10 @@ namespace PopiEngine::ECS {
 			components |= ActiveComponents::MESH_RENDERER;
 		if (directionalLight != nullptr)
 			components |= ActiveComponents::DIRECTIONAL_LIGHT;
+		if (pointLight != nullptr)
+			components |= ActiveComponents::POINT_LIGHT;
+		if (camera != nullptr)
+			components |= ActiveComponents::CAMERA;
 		attachedComponents = static_cast<ActiveComponents>(components);
 		return attachedComponents;
 	}	

@@ -14,7 +14,15 @@ namespace PopiEngine::ECS {
 	enum ActiveComponents {
 		TRANSFORM = 1 << 0, // 0001
 		MESH_RENDERER = 1 << 1, // 0010
-		DIRECTIONAL_LIGHT = 1 << 2 // 0100
+		DIRECTIONAL_LIGHT = 1 << 2, // 0100
+		POINT_LIGHT = 1 << 3, // 1000
+		PROCEDURAL_TERRAIN = 1 << 4, // 10000
+		CAMERA = 1 << 5 // 100000
+	};
+
+	enum CameraMode {
+		PERSPECTIVE,
+		ORTHOGRAPHIC
 	};
 
 	struct Transform {
@@ -35,6 +43,23 @@ namespace PopiEngine::ECS {
 		glm::vec3 ambient;
 		glm::vec3 diffuse;
 		glm::vec3 specular;
+	};
+
+	struct PointLight {
+		float intensity = 1.0f; // Intensity of the light
+	};
+
+
+
+	struct ProceduralTerrain {
+
+
+	};
+
+	struct Camera {
+		glm::vec3 defaultUp = glm::vec3(0.0f, 1.0f, 0.0f);
+		CameraMode mode = CameraMode::PERSPECTIVE;
+		float fov = 70.0f; // Field of view for perspective camera
 	};
 }
 
