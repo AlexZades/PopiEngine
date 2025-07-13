@@ -1,4 +1,5 @@
 #define STB_IMAGE_IMPLEMENTATION
+#define GLM_ENABLE_EXPERIMENTAL 
 
 #include "stb_image.h"
 #include <chrono>
@@ -19,11 +20,15 @@
 #include "importer.h"
 #include "settings.h"
 #include "ui.h"
+#include <entity.h>
+#include <components.h>
+#include <glm/gtx/euler_angles.hpp>
 
 using std::string, std::ifstream, std::stringstream, std::format;
 
 using namespace PopiEngine::Importer;
 using namespace PopiEngine::Logging;
+using namespace PopiEngine::ECS;
 using namespace PopiEngine::UI;
 namespace PopiEngine::Graphics 
 {
@@ -61,7 +66,12 @@ namespace PopiEngine::Graphics
         activeMeshes = map<GLuint, std::shared_ptr<Mesh>>();
 
     }
-
+    /// <summary>
+	/// Links a mesh to the Graphics Core.
+    /// we might not need this anymore 
+    /// </summary>
+    /// <param name="mesh"></param>
+    /// <returns></returns>
     GLuint GraphicsCore::LinkMesh(std::shared_ptr<Mesh> mesh) {
         if (mesh == nullptr) {
             LogError("Mesh is null, cannot link");
@@ -71,7 +81,10 @@ namespace PopiEngine::Graphics
         activeMeshes[id] = mesh;
         return id;
 	}
-
+    /// <summary>
+	/// Links camera to the Graphics Core.
+    /// </summary>
+    /// <param name="camera"></param>
     void GraphicsCore::LinkCamera(std::shared_ptr<Camera> camera) {
         if (camera == nullptr) {
             LogError("Camera seems not to be set, null ptr");
@@ -116,6 +129,44 @@ namespace PopiEngine::Graphics
         glfwPollEvents();
        
 	}
+    /// <summary>
+	/// Renders all entites with a MeshRenderer component.
+    /// </summary>
+    void GraphicsCore::RenderEntities(glm::mat4 proj, glm::mat4 view) 
+    {
+        for(const auto& entityPtr : entities) {  
+            auto entity = entityPtr.get();
+			//Check if we we should render this entity
+            if (entity != nullptr &&
+                entity->isActive &&
+                entity->GetActiveComponents() & ActiveComponents::MESH_RENDERER);
+                Transform* transform = nullptr;
+                //If the as a transform component, we apply its transformation
+                if (entity->GetActiveComponents() & ActiveComponents::TRANSFORM) {
+                    transform = entity->transform.get();
+                }
+                else {
+                    transform = new Transform();
+                }
+                auto meshRenderer = entity->meshRenderer;
+				//Get the mesh based on the meshID in the MeshRenderer component
+                if (meshRenderer && activeMeshes.find(meshRenderer->meshID) != activeMeshes.end()) {
+                    auto mesh = activeMeshes[meshRenderer->meshID];
+                    if (mesh) {
+                        glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
+                        glm::mat4 rotation = glm::eulerAngleYXZ(
+                            glm::radians(transform->rotation.x),
+                            glm::radians(transform->rotation.y),
+                            glm::radians(transform->rotation.z)
+                        );
+                        glm::mat4 scale = glm::scale(glm::mat4(1.0f), transform->scale);
+                        glm::mat4 model = translation * rotation * scale;
+                        mesh->Draw(model, view, proj);
+                    }
+                }
+            }
+                
+     }  
 
     void GraphicsCore::Draw() {
 		//Code to draw the scene goes here
@@ -129,17 +180,9 @@ namespace PopiEngine::Graphics
         );
         
         glm::mat4 view = activeCamera->GetViewMatrix();
-        glm::mat4 model = glm::mat4(1.0f); // Identity matrix for model transformation
         
-        for (const auto& item : activeMeshes) {
-            auto& mesh = item.second;
-            // Use the mesh's shader program and set matrices
-            mesh->shaderProgram->Use();
-            mesh->shaderProgram->setMat4("projection", projection);
-            mesh->shaderProgram->setMat4("view", view);
-            mesh->shaderProgram->setMat4("model", model);
-            mesh->Draw();
-        }
+		RenderEntities(projection, view); //The actual drawing is done in here
+
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);
     }
@@ -365,14 +408,19 @@ namespace PopiEngine::Graphics
 		 glBindVertexArray(0); // Unbind VAO
      }
 
-     void Mesh::Draw() {
+    
+     void Mesh::Draw(glm::mat4 model,glm::mat4 view,glm::mat4 proj) {
 		 GetTextures();
 
+         shaderProgram->setMat4("projection", proj);
+         shaderProgram->setMat4("view", view);
+         shaderProgram->setMat4("model", model);
 		 //Bind VAO and draw mesh
 		 glBindVertexArray(VAO);
          glDrawElements(GL_TRIANGLES, static_cast<GLuint>(indices.size()), GL_UNSIGNED_INT, 0);
-		 
 
+
+         
 		 //Unbind vao and cleanup 
          glBindVertexArray(0); 
 		 glActiveTexture(GL_TEXTURE0); 
@@ -380,6 +428,7 @@ namespace PopiEngine::Graphics
 	 }
 
      void Mesh::GetTextures() {
+         shaderProgram->Use();
          GLuint diffuse = 1, specular = 1, normal = 1, height = 1;
          for (GLuint i = 0; i < textures.size(); i++) {
              glActiveTexture(GL_TEXTURE0 + i);

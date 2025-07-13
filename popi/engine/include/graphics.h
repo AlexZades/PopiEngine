@@ -51,7 +51,7 @@ namespace PopiEngine::Graphics
 
 
 	//General Material Struct
-	//Not sure how to handle multiple materials yet though :(
+	//Currently not using it
 	struct Material {
 		glm::vec3 ambient;
 		glm::vec3 diffuse;
@@ -110,7 +110,7 @@ namespace PopiEngine::Graphics
 		GLuint VAO;
 
 		Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures, string shaderProgramName);
-		void Draw();
+		void Draw(glm::mat4 model, glm::mat4 view, glm::mat4 proj);
 
 	private:
 		GLuint  VBO, EBO;
@@ -142,6 +142,7 @@ namespace PopiEngine::Graphics
 		void SetUiCore(UICore* _uiCore);
 		void Clear();
 		void Draw();
+
 		void FrameStart();
 
 		GLuint LinkMesh(std::shared_ptr<Mesh> mesh);
@@ -149,10 +150,10 @@ namespace PopiEngine::Graphics
 		
 
 	private:
-
+		void RenderEntities(glm::mat4 proj, glm::mat4 view);
 		GLFWwindow* window = nullptr;
 		UICore* uiCore = nullptr;
 	};
 
-	std::shared_ptr<Mesh> CreateCube( string shaderProgramName = "unlit");
+	std::shared_ptr<Mesh> CreateCube(string shaderProgramName);
 }

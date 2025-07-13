@@ -14,10 +14,13 @@
 #include <settings.h>
 #include <ui.h>
 #include <project.h>
+#include <entity.h>
+#include <components.h>
 #include <utils.h>
 #include <fstream>
 using namespace PopiEngine::Graphics;
 using namespace PopiEngine::UI;
+using namespace PopiEngine::ECS;
 using namespace PopiEngine::Logging;
 
 using std::string, std::runtime_error, std::format, std::ifstream, std::stringstream;
@@ -69,17 +72,21 @@ namespace PopiEngine {
 		);
 		Texture test = Texture("Super_Mario", TextureType::DIFFUSE);
         vector<Texture> textures = { test };
-        graphicsCore->LinkMesh(CreateCube("unlit"));
+        auto meshId = graphicsCore->LinkMesh(CreateCube("unlit"));
 
+        auto etest = Entity("Cube");
+		etest.AttachTransform();
+        etest.AttachMesh(meshId);
         //Mesh cube = Mesh()
-        defaultShaderProgram->Use();
+     
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Use float literals to avoid warnings
 
        
         while (!glfwWindowShouldClose(graphicsCore->GetWindow())) {
 			graphicsCore->FrameStart();
 			uiCore->NewFrame();
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            
+            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
             void OnUpdate();
             static bool showDemo = false;
@@ -93,7 +100,7 @@ namespace PopiEngine {
             ImGui::Render();
 
 			graphicsCore->Draw();
-            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         OnQuit();

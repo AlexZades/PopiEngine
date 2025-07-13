@@ -1,36 +1,53 @@
 #pragma once  
 #include <iostream>  
 #include <components.h>  
+#include <vector>
+#include <memory>
+#include <entity.h>
+
 using namespace PopiEngine::ECS;  
-using std::string;
+using std::string, std::vector;
 
 namespace PopiEngine::ECS {  
       
+	
+
     class Entity {
     public:
 		string name;
+		bool isActive = true;
         std::shared_ptr<Transform> transform;
         std::shared_ptr<MeshRenderer> meshRenderer;
         std::shared_ptr<DirectionalLight> directionalLight;
 
-        Entity(string _name = "") {
-			name = _name;
-        }
-        ~Entity(){
+        Entity(string _name = "entity");
+        ~Entity();
         
-        }
-  
-        void AttachTransform() {  
-            transform = std::make_shared<Transform>();  
-        }  
-        void AttachMesh() {  
-            meshRenderer = std::make_shared<MeshRenderer>();  
-        }  
-        void AttachDirectionalLight() {  
-            directionalLight = std::make_shared<DirectionalLight>();  
-        }  
+#pragma region  attachMethods
+        void AttachTransform();
+        void AttachTransform(std::shared_ptr<Transform> t);
+        void AttachMesh();
+        void AttachMesh(std::shared_ptr<MeshRenderer> mr);
+        void AttachMesh(GLuint meshID);
+        void AttachDirectionalLight();
+        void AttachDirectionalLight(std::shared_ptr<DirectionalLight> dl);
+		//Bit mask to check which components are active
+#pragma endregion
+        ActiveComponents GetActiveComponents();
     private:   
         ActiveComponents attachedComponents;  
-  
+      
     };  
+
+    extern vector <std::shared_ptr<Entity>> entities;
+
+    class EntityManager {
+    public:
+        
+        EntityManager() {
+			vector < std::shared_ptr<Entity>> entities = vector<std::shared_ptr<Entity>>();
+		
+        
+        }
+    };
 }
