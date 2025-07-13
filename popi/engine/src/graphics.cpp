@@ -230,15 +230,10 @@ namespace PopiEngine::Graphics
         } else {
             aspectRatio = (float)windowWidth / (float)windowHeight;
         }
+        auto cam = GetActiveCamera();
+		glm::mat4 projection = GetProjectionMatrix(cam, aspectRatio);
         
-        glm::mat4 projection = glm::perspective(
-            glm::radians(70.0f), 
-            aspectRatio,         // Use calculated aspect ratio
-            0.1f,                // Near clipping plane
-            100.0f               // Far clipping plane
-        );
-        
-		auto cam = GetActiveCamera();
+		
 		glm::mat4 view = CalulateViewMatrix(cam);
         
 		RenderEntities(projection, view); //The actual drawing is done in here
@@ -267,7 +262,39 @@ namespace PopiEngine::Graphics
 
         return activeCamera;
 	}
-
+    glm::mat4 GraphicsCore::GetProjectionMatrix(std::shared_ptr<Entity> cameraEntity,float aspectRatio) {
+        auto camera = cameraEntity->camera;
+		if (camera == nullptr) {    
+            LogError("Active camera is null, cannot calculate view matrix");
+            return glm::mat4(1.0f); // Return identity matrix if no active camera
+        }
+		glm::mat4 projection;
+        switch(camera->mode) {
+            case CameraMode::PERSPECTIVE:
+				projection = glm::perspective(
+                    glm::radians(camera->fov),
+                    aspectRatio,         
+                    camera->nearPlane,               
+                    camera->farPlane
+                );
+				return projection;
+            case CameraMode::ORTHOGRAPHIC:
+               
+                projection = glm::ortho(
+                    -aspectRatio * camera->orthographicSize/2, 
+                    aspectRatio * camera->orthographicSize / 2,
+                    -camera->orthographicSize / 2,
+                    camera->orthographicSize / 2,
+                    camera->nearPlane, 
+                    camera->farPlane
+				);
+				return projection;
+            default:
+                LogError("Inccorect camera mode");
+                return glm::mat4(1.0f); 
+		}
+        return glm::mat4(1.0f);
+	}
     glm::mat4 GraphicsCore::CalulateViewMatrix(std::shared_ptr<Entity> cameraEntity) {
 		auto camera = cameraEntity->camera; 
 		auto transform = cameraEntity->transform;

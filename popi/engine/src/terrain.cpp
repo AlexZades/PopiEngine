@@ -8,5 +8,15 @@ using namespace PopiEngine::Logging;
 
 namespace PopiEngine::Terrain
 {
-	
+	void GenerateChunk() {
+		LogNormal("Generating terrain chunk");
+	}
+
+	void GenerateNoise() {
+
+	}
+
+	void GenerateVertexData() {
+		LogNormal("Generating vertex data for terrain chunk");
+	}
 }

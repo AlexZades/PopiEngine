@@ -38,15 +38,13 @@ namespace PopiEngine::ECS {
 
 
 	struct DirectionalLight {
-		glm::vec3 direction;
-
-		glm::vec3 ambient;
-		glm::vec3 diffuse;
-		glm::vec3 specular;
+		float intensity = 1.0f; 
+		glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 	};
 
 	struct PointLight {
 		float intensity = 1.0f; // Intensity of the light
+		glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
 	};
 
 
@@ -60,6 +58,10 @@ namespace PopiEngine::ECS {
 		glm::vec3 defaultUp = glm::vec3(0.0f, 1.0f, 0.0f);
 		CameraMode mode = CameraMode::PERSPECTIVE;
 		float fov = 70.0f; // Field of view for perspective camera
+		float nearPlane = 0.1f; 
+		float farPlane = 100.0f; 
+
+		float orthographicSize = 10.0f; 
 	};
 }
 

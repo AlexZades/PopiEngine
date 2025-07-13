@@ -135,6 +135,12 @@ namespace PopiEngine::UI
 						selectedEntityIndex = i; // Update the selected entity index
 					}
 				}
+				else
+				{
+					if (ImGui::Selectable(format("[{}]{} (disabled)", i, entity->name).c_str(), is_selected)) {
+						selectedEntityIndex = i; // Update the selected entity index
+					}
+				}
 			}
 		}
 		ImGui::EndListBox();
@@ -152,7 +158,7 @@ namespace PopiEngine::UI
 		auto& entity = entities[selectedEntityIndex];
 		ActiveComponents activeComponents = entity->GetActiveComponents();
 		ImGui::Begin("Inspector");
-
+        ImGui::Checkbox("Entity Enabled:", &entity->isActive);
 		//Check which components are active and draw their gizmos
 		if(activeComponents & TRANSFORM) {
 			TransformGizmo(entity->transform);
@@ -191,7 +197,7 @@ namespace PopiEngine::UI
 			if (mesh->textures.size() > 0) {
 				if (ImGui::TreeNode("Texture")) {
 					for (const auto meshTexture : mesh->textures) {
-						ImGui::Text("Texture: %s", meshTexture.path.c_str());
+						ImGui::Text(meshTexture.path.c_str());
 						ImGui::Image((ImTextureID)meshTexture.id, ImVec2(64, 64));
 					}
 					ImGui::TreePop();
@@ -213,8 +219,18 @@ namespace PopiEngine::UI
 	{
 	ImGui::SeparatorText("Camera");
 		if (camera) {
-			ImGui::Text("Mode: %s", camera->mode == PERSPECTIVE ? "Perspective" : "Orthographic");
-			ImGui::InputFloat("FOV", &camera->fov);
+			int selected = camera->mode;
+			const char* names[] = { "Perspective", "Orthographic" };
+			ImGui::Combo("Mode", &selected, names, IM_ARRAYSIZE(names), 4);
+			camera->mode = static_cast<CameraMode>(selected);
+			if(camera->mode == CameraMode::ORTHOGRAPHIC) {
+				ImGui::InputFloat("Orthographic Size", &camera->orthographicSize);
+			}
+			else {
+				ImGui::InputFloat("FOV", &camera->fov);
+				ImGui::InputFloat("Near Plane", &camera->nearPlane);
+				ImGui::InputFloat("Far Plane", &camera->farPlane);
+			}
 		}
 
 	}

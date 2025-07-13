@@ -150,6 +150,8 @@ namespace PopiEngine::Graphics
 
 		std::shared_ptr<Entity> GetActiveCamera();
 
+		
+
 		void FrameStart();
 		GLFWwindow* InitializeWindow(int H, int V, string windowName);
 		GLFWwindow* GetWindow();
@@ -171,6 +173,7 @@ namespace PopiEngine::Graphics
 		void RenderEntities(glm::mat4 proj, glm::mat4 view);
 
 		glm::mat4 CalulateViewMatrix(std::shared_ptr<Entity> cameraEntity);
+		glm::mat4 GetProjectionMatrix(std::shared_ptr<Entity> cameraEntity, float aspectRatio);
 
 		//These are used for the edtiror
 		void InitalizeFrameBuffer();
