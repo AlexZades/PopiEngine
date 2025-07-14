@@ -257,15 +257,32 @@ namespace PopiEngine::UI
 
 	void UICore::TextureMenu()
 	{
-		
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
+		for (const auto& [key,path]: texturePaths) {
+			ImGui::Text(key.c_str());
+		}
+		ImGui::EndChild();
 	}
 
 	void UICore::ShaderMenu()
 	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
+		for (const auto& [key, path] : shaderPaths) {
+			ImGui::Text(key.c_str());
+		}
+		ImGui::EndChild();
 	}
 
 	void UICore::MeshMenu()
 	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
+		for (const auto& [key, path] : meshPaths) {
+			ImGui::Text(key.c_str());
+		}
+		ImGui::EndChild();
 	}
 
 	
