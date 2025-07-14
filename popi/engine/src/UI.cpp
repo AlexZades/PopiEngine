@@ -8,10 +8,12 @@
 #include <graphics.h>
 #include <components.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <importer.h>
 
 using namespace PopiEngine::Logging;
 using namespace PopiEngine::ECS;
 using namespace PopiEngine::Graphics;
+using namespace PopiEngine::Importer;
 namespace PopiEngine::UI
 {
 
@@ -55,6 +57,196 @@ namespace PopiEngine::UI
 		}
 	}
 
+	void UICore::DrawMenuBar() {
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				FileMenu();
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Edit"))
+			{
+				EditMenu();
+				ImGui::EndMenu();
+			}
+		}
+		ImGui::EndMenuBar();
+	}
+
+	void UICore::FileMenu() {
+		if (ImGui::MenuItem("New Scene")) {}
+		if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
+	}
+	
+	void UICore::EditMenu() {
+		if (ImGui::BeginMenu("Create"))
+		{
+			if (ImGui::BeginMenu("Entity"))
+			{
+				if (ImGui::MenuItem("Empty"))
+				{
+					entities.push_back(std::make_shared<Entity>("New Entity"));
+				}
+				if (ImGui::MenuItem("Cube"))
+				{
+					auto mesh = activeGraphicsCore->LinkMesh(CreateCube("unlit"));
+					auto entity = std::make_shared<Entity>("Cube");
+					entity->AttachMesh(mesh);
+					entity->AttachTransform(std::make_shared<Transform>());
+					entities.push_back(entity);
+				}
+				if (ImGui::MenuItem("UVCube"))
+				{
+					auto mesh = activeGraphicsCore->LinkMesh(CreateUVCube("unlit"));
+					auto entity = std::make_shared<Entity>("UVCube");
+					entity->AttachMesh(mesh);
+					entity->AttachTransform(std::make_shared<Transform>());
+					entities.push_back(entity);
+				}
+				if (ImGui::MenuItem("Plane"))
+				{
+					auto mesh = activeGraphicsCore->LinkMesh(CreatePlane("unlit"));
+					auto entity = std::make_shared<Entity>("Plane");
+					entity->AttachMesh(mesh);
+					entity->AttachTransform(std::make_shared<Transform>());
+					entities.push_back(entity);
+				}
+				if (ImGui::MenuItem("Pyramid"))
+				{
+					auto mesh = activeGraphicsCore->LinkMesh(CreatePyramid("unlit"));
+					auto entity = std::make_shared<Entity>("Pyramid");
+					entity->AttachMesh(mesh);
+					entity->AttachTransform(std::make_shared<Transform>());
+					entities.push_back(entity);
+				}
+				if (ImGui::MenuItem("Cylinder"))
+				{
+					auto mesh = activeGraphicsCore->LinkMesh(CreateCylinder("unlit"));
+					auto entity = std::make_shared<Entity>("Cylinder");
+					entity->AttachMesh(mesh);
+					entity->AttachTransform(std::make_shared<Transform>());
+					entities.push_back(entity);
+				}
+				ImGui::EndMenu();
+			}
+			
+			ImGui::EndMenu();
+		}
+		//if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
+	}
+	void UICore::InspectorMenu()
+	{
+		AddComponentMenu();
+	}
+
+	void UICore::AddComponentMenu()
+	{
+		if (ImGui::Button("Add Component"))
+			ImGui::OpenPopup("Add Component");
+		if (ImGui::BeginPopup("Add Component"))
+		{
+			if (ImGui::MenuItem("Transform"))
+			{
+				if (!entities[selectedEntityIndex]->transform)
+					entities[selectedEntityIndex]->AttachTransform(std::make_shared<Transform>());
+			}
+			if (ImGui::MenuItem("Camera"))
+			{
+				if (!entities[selectedEntityIndex]->camera)
+					entities[selectedEntityIndex]->AttachCamera(std::make_shared<ECS::Camera>());
+			}
+			if( ImGui::MenuItem("Mesh Renderer"))
+			{
+				ImGui::BeginPopup("Add Mesh");
+				AddMeshRendererMenu();
+			}
+			ImGui::EndPopup();
+		}
+		
+
+	}
+
+	void UICore::ResourcesMenu()
+	{
+		ImGui::Begin("Resources");
+		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
+		if (ImGui::BeginTabBar("Resources", tab_bar_flags))
+		{
+			if (ImGui::BeginTabItem("Textures"))
+			{
+
+				TextureMenu();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Meshes"))
+			{
+				MeshMenu();
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Shaders"))
+			{
+				ShaderMenu();
+				ImGui::EndTabItem();
+			}
+			ImGui::EndTabBar();
+		}
+		ImGui::End();
+	}
+
+	void UICore::TextureMenu()
+	{
+		
+	}
+
+	void UICore::ShaderMenu()
+	{
+	}
+
+	void UICore::MeshMenu()
+	{
+	}
+
+	void UICore::AddMeshRendererMenu()
+	{
+		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Add Mesh", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("Create a new mesh");
+			ImGui::Separator();
+			vector<string> items = { "cube","UVCube","Cylinder","Pyramid","Plane" };
+			for (const auto& [key, value] : PopiEngine::Importer::meshPaths) {
+				items.push_back(key);
+			}
+			if (ImGui::BeginCombo("Select Mesh", items[selectedMesh].c_str()))
+			{
+				for (int i = 0; i < items.size(); i++)
+				{
+					const bool selected = (selectedMesh == i);
+					if (ImGui::Selectable(items[i].c_str(), selected))
+						selectedMesh = i;
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			if (ImGui::Button("Create")) {
+				auto id = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(items[selectedMesh],vector<Texture>(),"unlit"));
+				entities[selectedEntityIndex]->AttachMesh(id);
+				ImGui::CloseCurrentPopup();
+			}
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
+			ImGui::SetItemDefaultFocus();
+			
+
+			
+		}
+
+	}
+	
+
 	void UICore::DrawEditor(GLuint viewTexture) {
 		 // Create a dockspace that covers the entire viewport
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -77,12 +269,14 @@ namespace PopiEngine::UI
 		// Create the dockspace
 		ImGuiID dockspace_id = ImGui::GetID("Dock");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-		
+		DrawMenuBar();
 		ImGui::End();
 		
 		DrawHeirarchy();
 		DrawSceneView(viewTexture);
 		DrawInspector();
+		ResourcesMenu();
+		ResourcePreviewMenu();
 	}
 	
 	void UICore::DrawSceneView(GLuint viewTexture) {
@@ -151,6 +345,7 @@ namespace PopiEngine::UI
 	/// Draw the inspector for the currently selected entity.
 	/// </summary>
 	void UICore::DrawInspector() {
+		
 		//Safety check
 		if (selectedEntityIndex < 0 || selectedEntityIndex >= entities.size()) {
 			return; 
@@ -158,6 +353,7 @@ namespace PopiEngine::UI
 		auto& entity = entities[selectedEntityIndex];
 		ActiveComponents activeComponents = entity->GetActiveComponents();
 		ImGui::Begin("Inspector");
+		InspectorMenu();
         ImGui::Checkbox("Entity Enabled:", &entity->isActive);
 		//Check which components are active and draw their gizmos
 		if(activeComponents & TRANSFORM) {
@@ -174,11 +370,18 @@ namespace PopiEngine::UI
 	}
 
 #pragma region Component Spesific UI
+	void UICore::ResourcePreviewMenu()
+	{
+		ImGui::Begin("Resource Preview");
+		ImGui::End();
+	}
 	void UICore::TransformGizmo(std::shared_ptr<Transform> transform)
 	{
 		//To modify the transform of the selected entity we need to unpack
 		//the glm::vec3 to a floats so imgui can modify them
-		ImGui::SeparatorText("Transform");
+		ImGui::SeparatorText("Transform"); ImGui::SameLine(); if(ImGui::SmallButton("X##transfomr")) {
+			entities[selectedEntityIndex]->RemoveComponenet(ActiveComponents::TRANSFORM);
+		}
 		ImGui::InputFloat3("Position", glm::value_ptr(transform->position));
 		ImGui::InputFloat3("Rotation", glm::value_ptr(transform->rotation));
 		ImGui::InputFloat3("Scale", glm::value_ptr(transform->scale));
@@ -186,14 +389,19 @@ namespace PopiEngine::UI
 
 	void UICore::MeshRendererGizmo(std::shared_ptr<MeshRenderer> meshRenderer)
 	{
-		ImGui::SeparatorText("Mesh Renderer");
+		ImGui::SeparatorText("Mesh Renderer");ImGui::SameLine(); if (ImGui::SmallButton("X##Mesh")) {
+			entities[selectedEntityIndex]->RemoveComponenet(ActiveComponents::MESH_RENDERER);
+		}
 		if (meshRenderer) {
-			ImGui::Text("Mesh ID: %u", meshRenderer->meshID);
+			ImGui::Text(format("Mesh ID:{}", meshRenderer->meshID).c_str());
+			
 			auto mesh = activeGraphicsCore->activeMeshes[meshRenderer->meshID];
 			if(!mesh) {
 				ImGui::Text("Mesh not found!");
 				return;
 			}
+			ImGui::Checkbox("Transparent:", &meshRenderer->isTransparent);
+			ImGui::Text(format("{}", mesh->path).c_str());
 			if (mesh->textures.size() > 0) {
 				if (ImGui::TreeNode("Texture")) {
 					for (const auto meshTexture : mesh->textures) {
@@ -204,9 +412,12 @@ namespace PopiEngine::UI
 				}
 			}
 			if (mesh->shaderProgram) {
+				ImGui::ColorEdit3("Diffuse Color", glm::value_ptr(mesh->material.diffuse));
 				ImGui::Text(format("Shader [{}]: {}",mesh->shaderProgram->GetId(), mesh->shaderProgram->name).c_str());
 				//Add more shader properties if needed
 			}
+			
+			
 			else {
 				ImGui::Text("No Shader Program linked to this mesh!");
 			}
@@ -217,7 +428,9 @@ namespace PopiEngine::UI
 
 	void UICore::CameraGizmo(std::shared_ptr<ECS::Camera> camera)
 	{
-	ImGui::SeparatorText("Camera");
+	ImGui::SeparatorText("Camera");ImGui::SameLine(); if (ImGui::SmallButton("X##cam")) {
+		entities[selectedEntityIndex]->RemoveComponenet(ActiveComponents::CAMERA);
+	}
 		if (camera) {
 			int selected = camera->mode;
 			const char* names[] = { "Perspective", "Orthographic" };
@@ -233,6 +446,30 @@ namespace PopiEngine::UI
 			}
 		}
 
+	}
+
+	void UICore::PontLightGizmo(std::shared_ptr<PointLight> pointLight)
+	{
+		ImGui::SeparatorText("Point Light");ImGui::SameLine(); if (ImGui::SmallButton("X##pointLight")) {
+			entities[selectedEntityIndex]->RemoveComponenet(ActiveComponents::POINT_LIGHT);
+		}
+		if (pointLight) {
+			//Bsic light properties
+			ImGui::InputFloat("Intensity:", &pointLight->intensity);
+			ImGui::ColorEdit3("Ambient", glm::value_ptr(pointLight->ambient));
+			ImGui::ColorEdit3("Diffuse", glm::value_ptr(pointLight->diffuse));
+			ImGui::ColorEdit3("Specular", glm::value_ptr(pointLight->specular));
+
+			// Attenuation parameters
+			ImGui::Text("Attenuation Parameters");
+			ImGui::InputFloat("Constant:", &pointLight->constant);
+			ImGui::InputFloat("Linear:", &pointLight->linear);
+			ImGui::InputFloat("Quadratic:", &pointLight->quadratic);
+		}
+	}
+
+	void UICore::DirectionalLightGizmo(std::shared_ptr<DirectionalLight> directionalLight)
+	{
 	}
 
 #pragma endregion

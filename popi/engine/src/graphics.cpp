@@ -100,6 +100,8 @@ namespace PopiEngine::Graphics
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEBUG_OUTPUT);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glDebugMessageCallback(message_callback, nullptr);
 
         activeMeshes = map<GLuint, std::shared_ptr<Mesh>>();
@@ -180,6 +182,7 @@ namespace PopiEngine::Graphics
     /// </summary>
     void GraphicsCore::RenderEntities(glm::mat4 proj, glm::mat4 view) 
     {
+		auto depthSortedEntities = std::map<float,std::shared_ptr<Entity>>();
         for (const auto& entityPtr : entities) {
             auto entity = entityPtr.get();
             //Check several conditions to see if we should render the entity
@@ -198,8 +201,12 @@ namespace PopiEngine::Graphics
                 }
                 auto& meshRenderer = entity->meshRenderer;
                 //Get the mesh based on the meshID in the MeshRenderer component
+                
                 if (meshRenderer && activeMeshes.find(meshRenderer->meshID) != activeMeshes.end()) {
-					
+                    if (meshRenderer->isTransparent) {
+						float distance = glm::length(transform->position - GetActiveCamera()->transform->position);
+						depthSortedEntities[distance] = entityPtr; // Sort by distance for transparency
+                    }
                     auto mesh = activeMeshes[meshRenderer->meshID];
                     if (mesh) {
                         glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
@@ -214,8 +221,38 @@ namespace PopiEngine::Graphics
                     }
                 }
             }
+
         }
-                
+         
+		//Defered rendering for transparent entities
+        for (const auto& [distance, entityPtr] : depthSortedEntities) {
+            auto entity = entityPtr.get();
+
+                Transform* transform = nullptr;
+                if (entity->GetActiveComponents() & ActiveComponents::TRANSFORM) {
+                    transform = entity->transform.get();
+                }
+                else {
+                    Transform* defaultTransform = new Transform();
+                    transform = defaultTransform;
+                }
+                auto& meshRenderer = entity->meshRenderer;
+                if (meshRenderer && activeMeshes.find(meshRenderer->meshID) != activeMeshes.end()) {
+                    auto mesh = activeMeshes[meshRenderer->meshID];
+                    if (mesh) {
+                        glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
+                        glm::mat4 rotation = glm::eulerAngleYXZ(
+                            glm::radians(transform->rotation.x),
+                            glm::radians(transform->rotation.y),
+                            glm::radians(transform->rotation.z)
+                        );
+                        glm::mat4 scale = glm::scale(glm::mat4(1.0f), transform->scale);
+                        glm::mat4 model = translation * rotation * scale;
+                        mesh->Draw(model, view, proj);
+                    }
+                }
+            
+        }
      }  
 
     void GraphicsCore::Draw() {
@@ -251,7 +288,7 @@ namespace PopiEngine::Graphics
     }
 
     std::shared_ptr<Entity> GraphicsCore::GetActiveCamera() {
-        if (activeCamera == nullptr) {
+        if (activeCamera->camera == nullptr) {
             for(const auto& entity : entities) {
                 if (entity.get()->GetActiveComponents() & ActiveComponents::CAMERA) {
                     activeCamera = entity;
@@ -303,18 +340,23 @@ namespace PopiEngine::Graphics
             LogError("Camera or Transform component is null, cannot calculate view matrix");
             return glm::mat4(1.0f); // Return identity matrix if components are missing
         }
-        glm::vec3 newFront;
-
-        newFront.x = cos(glm::radians(transform->rotation.y)) * cos(glm::radians(transform->rotation.x));
-        newFront.y = sin(glm::radians(transform->rotation.y));
-        newFront.z = sin(glm::radians(transform->rotation.y)) * cos(glm::radians(transform->rotation.x));
-        glm::vec3 Front = glm::normalize(newFront);
+        
+        // Convert Euler angles to direction vector
+        // Assuming rotation.x = pitch, rotation.y = yaw, rotation.z = roll
+        float pitch = glm::radians(transform->rotation.x);
+        float yaw = glm::radians(transform->rotation.y);
+        
+        glm::vec3 front;
+        front.x = cos(yaw) * cos(pitch);
+        front.y = sin(pitch);
+        front.z = sin(yaw) * cos(pitch);
+        front = glm::normalize(front);
 
         return glm::lookAt(
-            transform->position, // Camera position
-            transform->position + Front, // Look at point
-            camera->defaultUp // Up vector
-		);
+            transform->position,           // Camera position
+            transform->position + front,   // Look at point
+            camera->defaultUp              // Up vector
+        );
     }
 
     void GraphicsCore::InitalizeFrameBuffer() {
@@ -578,6 +620,10 @@ namespace PopiEngine::Graphics
 
      Mesh::Mesh(string name, vector<Texture> textures, string shaderProgramName)
      {
+         if (shaderPrograms.find(shaderProgramName) == shaderPrograms.end()) {
+             LogError(format("Invalid Shader Program: {}, has the shader been initalized?", shaderProgramName));
+             return;
+         }
 
          if (meshPaths.find(name) == meshPaths.end()) {
              LogError(format("Invalid Mesh: {}", name));
@@ -590,12 +636,8 @@ namespace PopiEngine::Graphics
          this->indices = pathDef.indices;
          this->textures = textures;
 
-         if (shaderPrograms.find(shaderProgramName) == shaderPrograms.end()) {
-             LogError(format("Invalid Shader Program: {}, has the shader been initalized?", shaderProgramName));
-             return;
-         }
-         shaderProgram = shaderPrograms[shaderProgramName];
 
+         shaderProgram = shaderPrograms[shaderProgramName];
 
          InitalizeMesh();
      }
@@ -682,6 +724,8 @@ namespace PopiEngine::Graphics
              glUniform1i(glGetUniformLocation(shaderProgram->GetId(), (name + number).c_str()), i);
 			 glBindTexture(GL_TEXTURE_2D, textures[i].id);
          }
+		 //Set shader material properties
+         shaderProgram->setVec3("DIFFUSE_COLOR", material.diffuse);
      }
 #pragma endregion
 
@@ -704,130 +748,42 @@ Texture::Texture(string name, TextureType type) {
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    if(nrChannels == 4)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+    else
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 	LogNormal(std::format("Loaded texture: {} with id: {}", path, id));
     stbi_image_free(data);
 }
 
 #pragma endregion
-// Add this function to create a default cube
-std::shared_ptr<Mesh> CreateCube(string shaderProgramName) {
-    // Cube vertices with Position, Normal, and Texture Coordinates
-    vector<Vertex> vertices = {
-        // Front face (facing +Z)
-        {{-0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 1.0f}},
 
-        // Back face (facing -Z)
-        {{ 0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 1.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}},
-
-        // Left face (facing -X)
-        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 0.0f}},
-        {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Right face (facing +X)
-        {{ 0.5f, -0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Top face (facing +Y)
-        {{-0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Bottom face (facing -Y)
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}}
-    };
-
-    // Cube indices (two triangles per face)
-    vector<GLuint> indices = {
-        // Front face
-        0, 1, 2,   2, 3, 0,
-        // Back face
-        4, 5, 6,   6, 7, 4,
-        // Left face
-        8, 9, 10,  10, 11, 8,
-        // Right face
-        12, 13, 14, 14, 15, 12,
-        // Top face
-        16, 17, 18, 18, 19, 16,
-        // Bottom face
-        20, 21, 22, 22, 23, 20
-    };
-
-	vector<Texture> textures; // No textures for the default cube
-    // Create and return the mesh
-    return std::make_shared<Mesh>(vertices, indices, textures, shaderProgramName);
-}
+#pragma region Default Mesh Functions
 std::shared_ptr<Mesh> CreateCube(string shaderProgramName, vector<Texture> textures) {
-    // Cube vertices with Position, Normal, and Texture Coordinates
-    vector<Vertex> vertices = {
-        // Front face (facing +Z)
-        {{-0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f,  0.5f}, {0.0f,  0.0f,  1.0f}, {0.0f, 1.0f}},
-
-        // Back face (facing -Z)
-        {{ 0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 0.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {1.0f, 1.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  0.0f, -1.0f}, {0.0f, 1.0f}},
-
-        // Left face (facing -X)
-        {{-0.5f, -0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 0.0f}},
-        {{-0.5f, -0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 0.0f}},
-        {{-0.5f,  0.5f,  0.5f}, {-1.0f, 0.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {-1.0f, 0.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Right face (facing +X)
-        {{ 0.5f, -0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {1.0f,  0.0f,  0.0f}, {1.0f, 1.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {1.0f,  0.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Top face (facing +Y)
-        {{-0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f,  0.5f,  0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f,  0.5f, -0.5f}, {0.0f,  1.0f,  0.0f}, {0.0f, 1.0f}},
-
-        // Bottom face (facing -Y)
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 0.0f}},
-        {{ 0.5f, -0.5f, -0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 0.0f}},
-        {{ 0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {1.0f, 1.0f}},
-        {{-0.5f, -0.5f,  0.5f}, {0.0f, -1.0f,  0.0f}, {0.0f, 1.0f}}
-    };
-
-    // Cube indices (two triangles per face)
-    vector<GLuint> indices = {
-        // Front face
-        0, 1, 2,   2, 3, 0,
-        // Back face
-        4, 5, 6,   6, 7, 4,
-        // Left face
-        8, 9, 10,  10, 11, 8,
-        // Right face
-        12, 13, 14, 14, 15, 12,
-        // Top face
-        16, 17, 18, 18, 19, 16,
-        // Bottom face
-        20, 21, 22, 22, 23, 20
-    };
-    // Create and return the mesh
-    return std::make_shared<Mesh>(vertices, indices, textures, shaderProgramName);
+    return std::make_shared<Mesh>(PRIMATIVE_CUBE, textures, shaderProgramName);
 }
+std::shared_ptr<Mesh> CreateUVCube(string shaderProgramName, vector<Texture> textures) {
+    if (textures.size() == 0)
+        textures.push_back(Texture(PRIMATIVE_UVCUBE, TextureType::DIFFUSE));
+    return std::make_shared<Mesh>(PRIMATIVE_UVCUBE, textures, shaderProgramName);
+}
+std::shared_ptr<Mesh> CreateCylinder(string shaderProgramName, vector<Texture> textures) {
+    if (textures.size() == 0)
+        textures.push_back(Texture(PRIMATIVE_CYL, TextureType::DIFFUSE));
+    return std::make_shared<Mesh>(PRIMATIVE_CYL, textures, shaderProgramName);
+}
+std::shared_ptr<Mesh> CreatePlane(string shaderProgramName, vector<Texture> textures) {
+    if (textures.size() == 0)
+        textures.push_back(Texture(PRIMATIVE_PLANE, TextureType::DIFFUSE));
+    return std::make_shared<Mesh>(PRIMATIVE_PLANE, textures, shaderProgramName);
+}
+std::shared_ptr<Mesh> CreatePyramid(string shaderProgramName, vector<Texture> textures) {
+    if (textures.size() == 0)
+        textures.push_back(Texture(PRIMATIVE_PYRAMID, TextureType::DIFFUSE));
+    return std::make_shared<Mesh>(PRIMATIVE_PYRAMID, textures, shaderProgramName);
+}
+#pragma endregion
+
+
 }

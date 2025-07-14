@@ -23,6 +23,7 @@ namespace PopiEngine::UI
 		void InitializeImGui();
 		int selectedEntityIndex = 0;
 		void NewFrame();
+		
 		void DrawEditor(GLuint viewTexture);
 
 		GLFWwindow* _window;
@@ -31,11 +32,31 @@ namespace PopiEngine::UI
 		void DrawSceneView(GLuint viewTexture);
 		void DrawHeirarchy();
 		void DrawInspector();
+		void DrawMenuBar();
 		void UpdateEntites();
+
+		//Menu Bar Menus
+		void FileMenu();
+		void EditMenu();
+		void InspectorMenu();
+		void AddComponentMenu();
+		int selectedMesh = 0;
+
+		void AddMeshRendererMenu();
+		//Resources Menu
+		void ResourcesMenu();
+		void TextureMenu();
+		void ShaderMenu();
+		void MeshMenu();
+
+		//Resource Preview menu
+		void ResourcePreviewMenu();
 		//Inspector gizmo draw calls
 		void TransformGizmo(std::shared_ptr<Transform> transform);
 		void MeshRendererGizmo(std::shared_ptr<MeshRenderer> meshRenderer);
 		void CameraGizmo(std::shared_ptr<ECS::Camera> camera);
+		void PontLightGizmo(std::shared_ptr<PointLight> pointLight);
+		void DirectionalLightGizmo(std::shared_ptr<DirectionalLight> directionalLight);
 	};
 
 	struct UIElement {

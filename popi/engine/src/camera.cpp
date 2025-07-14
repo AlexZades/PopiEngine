@@ -23,7 +23,7 @@ namespace PopiEngine::Graphics {
 	void Camera::RecomputeCameraVectors() {
 		//Compute the new vectors based on the current yaw and pitch
 		glm::vec3 newFront;
-
+		
 		newFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 		newFront.y = sin(glm::radians(pitch));
 		newFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));

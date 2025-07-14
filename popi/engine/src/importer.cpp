@@ -1,5 +1,6 @@
 #include <graphics.h>
 #include <settings.h>
+#include <components.h>
 #include <importer.h>
 #include  <vector>
 #include <glad/gl.h>
@@ -7,7 +8,7 @@
 #include <filesystem>
 #include <utils.h>
 #include <scene.h>
-
+#include <json.hpp>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 namespace fs = std::filesystem;
@@ -150,6 +151,7 @@ namespace PopiEngine::Importer
 							LogError(format("Mesh Importer: Unsupported mesh type for {}.", name));
 							continue;
 						}
+						LogNormal(format("Mesh Importer: Added mesh: {} at path: {}", name, path));
 						meshPaths[name] = meshPathDef;
 					}
 					else {
@@ -159,7 +161,7 @@ namespace PopiEngine::Importer
 			}
 		}
 		
-		return map<string, meshPathDefinition>();
+		return meshPaths;
 	}
 
 	void ObjLoader(meshPathDefinition* meshDefinition) {
@@ -180,9 +182,9 @@ namespace PopiEngine::Importer
 		//Thank you professor for the code êΩÇ…ä¥é”ÇµÇƒÇ®ÇËÇ‹Ç∑ÅB
 
 		for (int s = 0; s < shapes.size(); s++) {
-			const tinyobj::mesh_t& mesh = shapes[s].mesh;
+			 tinyobj::mesh_t& mesh = shapes[s].mesh;
 			for (int i = 0; i < mesh.indices.size(); i++) {
-				const tinyobj::index_t& index = mesh.indices[i];
+				 tinyobj::index_t& index = mesh.indices[i];
 
 				glm::vec3 position(0.0f, 0.0f, 0.0f);
 				glm::vec3 normal(0.0f, 0.0f, 0.0f);
@@ -203,7 +205,7 @@ namespace PopiEngine::Importer
 					texcoord.y = attrib.texcoords[2 * size_t(index.texcoord_index) + 1];
 				}
 	
-				const Vertex vertex(position, normal, texcoord);
+				 Vertex vertex(position, normal, texcoord);
 
 				indices.push_back(vertices.size());
 				vertices.push_back(vertex);
@@ -216,13 +218,63 @@ namespace PopiEngine::Importer
 	}
 	
 	
-	void Scene::Load(string name) {
+	void Scene::Load() {
 		LogNormal("Loading scene...");
 	}
 
-	void Scene::Save(string name) {
-		// Save the scene to a file or other destination
-		// This is a placeholder for actual saving logic
+	void Scene::Save() {
+
 		LogNormal("Saving scene...");
 	}
+
+	//Placeholder (will implement later)
+	json Scene::ToJson() {
+		return json({
+			{"entities", json::array()}
+			});
+	}
+
+	void Scene::FromJson(const json& j) {
+
+		LogNormal("Loading scene from JSON...");
+	}
+
+#pragma region Component Json Serializers
+	void ToJson(json& j, const Transform& transform) {
+	
+	}
+	void FromJson(const json& j, Transform& transform) {
+
+	}
+
+	void ToJson(json& j, const MeshRenderer& meshRenderer) {
+
+	}
+	void FromJson(const json& j, MeshRenderer& meshRenderer) {
+
+	}
+
+	void ToJson(json& j, const DirectionalLight& directionalLight) {
+
+	}
+	void FromJson(const json& j, DirectionalLight& directionalLight) {
+
+	}
+
+	void ToJson(json& j, const PointLight& pointLight) {
+
+	}
+	void FromJson(const json& j, PointLight& pointLight) {
+
+	}
+
+	void ToJson(json& j, const ECS::Camera& camera) {
+
+	}
+	void FromJson(const json& j, ECS::Camera& camera) {
+
+	}
+#pragma endregion
+
+	
 }

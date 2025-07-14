@@ -80,6 +80,37 @@ namespace PopiEngine::ECS {
 		LogNormal(std::format("Attaching ProceduralTerrain to entity: {}", name));
 	}
 
+	void Entity::RemoveComponenet(ActiveComponents target)
+	{
+		switch (target) {
+			case ActiveComponents::TRANSFORM:
+			transform.reset();
+			LogNormal(std::format("Removing Transform from entity: {}", name));
+			break;
+			case ActiveComponents::MESH_RENDERER:
+				meshRenderer.reset();
+				LogNormal(std::format("Removing MeshRenderer from entity: {}", name));
+				break;
+			case ActiveComponents::DIRECTIONAL_LIGHT:
+				directionalLight.reset();
+				LogNormal(std::format("Removing DirectionalLight from entity: {}", name));
+				break;
+			case ActiveComponents::POINT_LIGHT:
+				pointLight.reset();
+				LogNormal(std::format("Removing PointLight from entity: {}", name));
+				break;
+			case ActiveComponents::CAMERA:
+				camera.reset();
+				LogNormal(std::format("Removing Camera from entity: {}", name));
+				break;
+			case ActiveComponents::PROCEDURAL_TERRAIN:
+				proceduralTerrain.reset();
+				LogNormal(std::format("Removing ProceduralTerrain from entity: {}", name));
+				break;
+			
+		}
+	}
+
 #pragma endregion
 	ActiveComponents Entity::GetActiveComponents() {
 		int components = 0;

@@ -40,6 +40,8 @@ namespace PopiEngine::ECS {
 		void AttachCamera(std::shared_ptr<Camera> camera);
 		void AttachProceduralTerrain();
 		void AttachProceduralTerrain(std::shared_ptr<ProceduralTerrain> pt);
+
+        void RemoveComponenet(ActiveComponents target);
 		//Bit mask to check which components are active
 #pragma endregion
         ActiveComponents GetActiveComponents();

@@ -15,10 +15,8 @@
 #include <ui.h>
 #include <camera.h>
 #include <settings.h>
-#include <importer.h>
 using std::string, std::vector, std::map, std::shared_ptr;
 using namespace PopiEngine::UI;	
-using namespace PopiEngine::Importer;
 /// <summary>
 /// Graphic utilities for PopiEngine
 /// 
@@ -33,6 +31,12 @@ namespace PopiEngine::Graphics
 		glm::vec3 Position;
 		glm::vec3 Normal;
 		glm::vec2 TexCoords;
+		
+		Vertex(const glm::vec3& position, const glm::vec3& normal, const glm::vec2& texCoords)
+			: Position(position), Normal(normal), TexCoords(texCoords) {}
+		
+		// Default constructor
+		Vertex() : Position(0.0f), Normal(0.0f), TexCoords(0.0f) {}
 	};
 
 	enum TextureType {
@@ -46,8 +50,7 @@ namespace PopiEngine::Graphics
 		GLuint id;
 		TextureType type;
 		string path;
-
-		Texture(string _path, TextureType _type);
+		Texture(string name, TextureType type);
 	};
 
 
@@ -55,9 +58,8 @@ namespace PopiEngine::Graphics
 	//General Material Struct
 	//Currently not using it
 	struct Material {
-		glm::vec3 ambient;
-		glm::vec3 diffuse;
-		glm::vec3 specular;
+        glm::vec3 diffuse{1.0f, 1.0f, 1.0f};
+		glm::vec3 specular{1.0f, 1.0f, 1.0f };
 		float shininess;
 	};
 
@@ -107,6 +109,7 @@ namespace PopiEngine::Graphics
 		vector<Vertex> vertices;
 		vector<GLuint> indices;
 		vector<Texture> textures;
+		Material material; 
 
 		string path = ""; //Path to the mesh file, if applicable
 		string name = ""; //Name of the mesh, if applicable
@@ -191,6 +194,9 @@ namespace PopiEngine::Graphics
 	extern GraphicsCore* activeGraphicsCore; //Thhis is terrible please fix it later
 
 	//Primative Mesh Creation Functions
-	std::shared_ptr<Mesh> CreateCube(string shaderProgramName);
-	std::shared_ptr<Mesh> CreateCube(string shaderProgramName, vector<Texture> textures);
+	std::shared_ptr<Mesh> CreateCube(string shaderProgramName, vector<Texture> textures = vector<Texture>());
+	std::shared_ptr<Mesh> CreateUVCube(string shaderProgramName, vector<Texture> textures = vector<Texture>());
+	std::shared_ptr<Mesh> CreatePlane(string shaderProgramName, vector<Texture> textures = vector<Texture>());
+	std::shared_ptr<Mesh> CreateCylinder(string shaderProgramName, vector<Texture> textures = vector<Texture>());
+	std::shared_ptr<Mesh> CreatePyramid(string shaderProgramName, vector<Texture> textures = vector<Texture>());
 }
