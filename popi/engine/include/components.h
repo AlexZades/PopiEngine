@@ -33,11 +33,15 @@ namespace PopiEngine::ECS {
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 		glm::vec3 scale = glm::vec3(1.0f, 1.0f, 1.0f);
+
+		
 	};
 
 	struct MeshRenderer {
 		GLuint meshID;
 		bool isTransparent = false; //we just use this for depth sorting
+	
+	
 	};
 
 
@@ -45,6 +49,8 @@ namespace PopiEngine::ECS {
 	struct DirectionalLight {
 		float intensity = 1.0f;
 		glm::vec3 color = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	
 	};
 
 	struct PointLight {
@@ -56,6 +62,8 @@ namespace PopiEngine::ECS {
 		float constant;
 		float linear;
 		float quadratic;
+
+	
 	};
 
 
@@ -73,6 +81,9 @@ namespace PopiEngine::ECS {
 		float farPlane = 100.0f;
 
 		float orthographicSize = 10.0f;
+
+
+		
 	};
 
 	enum InputType {
@@ -86,20 +97,20 @@ namespace PopiEngine::ECS {
 using namespace PopiEngine::ECS;
 namespace PopiEngine::Importer {
 #pragma region Component Json Serialziers
-
-	void ToJson(json& j, const Transform& transform);
+	void ToJson(json& j,  Transform& transform);
 	void FromJson(const json& j, Transform& transform);
-
-	void ToJson(json& j, const MeshRenderer& meshRenderer);
-	void FromJson(const json& j, MeshRenderer& meshRenderer);
-
-	void ToJson(json& j, const DirectionalLight& directionalLight);
+	
+	void ToJson(json& j,  DirectionalLight& directionalLight);
 	void FromJson(const json& j, DirectionalLight& directionalLight);
 
-	void ToJson(json& j, const PointLight& pointLight);
+	void ToJson(json& j,  PointLight& pointLight);
 	void FromJson(const json& j, PointLight& pointLight);
 
-	void ToJson(json& j, const ECS::Camera& camera);
+	void ToJson(json& j,  MeshRenderer& meshRenderer);
+	void FromJson(const json& j, MeshRenderer& meshRenderer);
+
+
+	void ToJson(json& j,  ECS::Camera& camera);
 	void FromJson(const json& j, ECS::Camera& camera);
 
 #pragma endregion

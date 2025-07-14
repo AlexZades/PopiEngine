@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <entity.h>
+using namespace PopiEngine::Importer;
 
 using namespace PopiEngine::ECS;  
 using std::string, std::vector;
@@ -52,12 +53,19 @@ namespace PopiEngine::ECS {
 
     extern vector <std::shared_ptr<Entity>> entities;
 
+    //We need to refactor this to singleton instead of using externs
     class EntityManager {
     public:
         
+		
         EntityManager();
 
         std::shared_ptr<Entity> InstatiateEntity(string name);
+
 		void DestroyEntity(std::shared_ptr<Entity> entity);
+
+		void OnNewScene();
     };
+
+    
 }

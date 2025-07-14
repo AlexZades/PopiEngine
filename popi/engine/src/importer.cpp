@@ -1,4 +1,4 @@
-#include <graphics.h>
+Ôªø#include <graphics.h>
 #include <settings.h>
 #include <components.h>
 #include <importer.h>
@@ -15,13 +15,14 @@ namespace fs = std::filesystem;
 using namespace PopiEngine::Graphics;
 using std::string, std::vector, std::map, std::format;
 using namespace PopiEngine::Logging;
-
+using json = nlohmann::json;
 /// <summary>
 /// Importer handles finding paths to resources the engine will use.
 /// It doesnt actually load any of the resources, just finds them and stores their paths.
 /// </summary>
 namespace PopiEngine::Importer
 {
+	Scene currentScene; //This is bad fix later 
 
 	map<string, vector<shaderPathDefinition>> shaderPaths = ImportShaders();
 	map<string, texturePathDefinition> texturePaths = ImportTextures();
@@ -179,7 +180,7 @@ namespace PopiEngine::Importer
 
 		std::vector<Vertex> vertices;
 		std::vector<GLuint> indices;
-		//Thank you professor for the code êΩÇ…ä¥é”ÇµÇƒÇ®ÇËÇ‹Ç∑ÅB
+		//Thank you professor for the code Ë™†„Å´ÊÑüË¨ù„Åó„Å¶„Åä„Çä„Åæ„Åô„ÄÇ
 
 		for (int s = 0; s < shapes.size(); s++) {
 			 tinyobj::mesh_t& mesh = shapes[s].mesh;
@@ -223,16 +224,114 @@ namespace PopiEngine::Importer
 	}
 
 	void Scene::Save() {
-
+		this->sceneEntities = entities;
+		json sceneJson = toJson();	
+		string scenePath = format("{}/{}.popi", RESOURCES_SCENES, name);
 		LogNormal("Saving scene...");
+		std::ofstream file(scenePath);
+		if (file.is_open()) {
+			file << sceneJson.dump(4); 
+			file.close();
+			LogNormal(format("Scene {} saved to {}", name, scenePath));
+		}
+		else {
+			LogError(format("Failed to save scene to {}", scenePath));
+		}
+		
 	}
 
-	//Placeholder (will implement later)
-	json Scene::ToJson() {
-		return json({
-			{"entities", json::array()}
-			});
-	}
+	json Scene::toJson() {
+    json j;  
+    
+    j["format version"] = SCENE_VERSION;  
+    j["scene"]["name"] = name;  
+    vector<json> entitiesJson;
+
+    if (!entities.empty()) {  
+        // Serialize each entity
+        for (const auto& entity : sceneEntities) {
+            json entityJson;  
+            entityJson["name"] = entity->name; 
+            LogNormal(format("Serializing entity: {}", entity->name));
+
+            ActiveComponents activeComponents = entity->GetActiveComponents();
+            
+            // Check each component using bitwise AND operations
+            if (activeComponents & ActiveComponents::TRANSFORM) {
+                std::shared_ptr<Transform> transform = entity->transform;	
+                if (transform != nullptr) {
+                    json transformJson;
+                    ToJson(transformJson, *transform.get());
+                    entityJson["transform"] = transformJson;
+                    LogNormal(format("Serialized transform for entity: {}", entity->name));
+                } 
+				else {
+                    LogWarning(format("Entity {} has TRANSFORM flag but no transform component.", entity->name));
+                }
+            }
+            
+            if (activeComponents & ActiveComponents::MESH_RENDERER) {
+                std::shared_ptr<MeshRenderer> meshRenderer = entity->meshRenderer;
+                if (meshRenderer != nullptr) { 
+                    json meshRendererJson;
+                    ToJson(meshRendererJson, *meshRenderer.get());
+                    entityJson["mesh_renderer"] = meshRendererJson;
+                    LogNormal(format("Serialized mesh renderer for entity: {}", entity->name));
+                } 
+				else {
+                    LogWarning(format("Entity {} has MESH_RENDERER flag but no mesh renderer component.", entity->name));
+                }
+            }
+            
+          
+            // Add other components when you uncomment them
+            /*
+            if (activeComponents & ActiveComponents::DIRECTIONAL_LIGHT) {
+                std::shared_ptr<DirectionalLight> directionalLight = entity->directionalLight;
+                if (directionalLight != nullptr) { 
+                    json directionalLightJson;
+                    ToJson(directionalLightJson, *directionalLight.get());
+                    entityJson["directional_light"] = directionalLightJson;
+                    LogNormal(format("Serialized directional light for entity: {}", entity->name));
+                } 
+				else {
+                    LogWarning(format("Entity {} has DIRECTIONAL_LIGHT flag but no directional light component.", entity->name));
+                }
+            }
+            
+            if (activeComponents & ActiveComponents::POINT_LIGHT) {
+                std::shared_ptr<PointLight> pointLight = entity->pointLight;
+                if (pointLight != nullptr) {
+                    json pointLightJson;
+                    ToJson(pointLightJson, *pointLight.get());
+                    entityJson["point_light"] = pointLightJson;
+                    LogNormal(format("Serialized point light for entity: {}", entity->name));
+                } 
+				else {
+                    LogWarning(format("Entity {} has POINT_LIGHT flag but no point light component.", entity->name));
+                }
+            }
+            */
+			if (activeComponents & ActiveComponents::CAMERA) {
+				std::shared_ptr<ECS::Camera> cam = entity->camera;
+				if (cam != nullptr) {
+					json cameraJson;
+					ToJson(cameraJson, *cam.get());
+					entityJson["camera"] = cameraJson;
+					LogNormal(format("Serialized camera for entity: {}", entity->name));
+				}
+				else {
+					LogWarning(format("Entity {} has CAMERA flag but no camera component.", entity->name));
+				}
+			}
+
+            entitiesJson.push_back(entityJson);
+        }  
+        j["scene"]["entities"] = entitiesJson;
+    }  
+    
+    return j;
+}
 
 	void Scene::FromJson(const json& j) {
 
@@ -240,25 +339,69 @@ namespace PopiEngine::Importer
 	}
 
 #pragma region Component Json Serializers
-	void ToJson(json& j, const Transform& transform) {
-	
+
+	void ToJson(json& j, Transform& transform) {
+		j = json{
+			{"position", {transform.position.x, transform.position.y, transform.position.z}},
+			{"rotation", {transform.rotation.x, transform.rotation.y, transform.rotation.z}},
+			{"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}
+		};
 	}
 	void FromJson(const json& j, Transform& transform) {
-
+		transform.position = glm::vec3(j["position"][0], j["position"][1], j["position"][2]);
+		transform.rotation = glm::vec3(j["rotation"][0], j["rotation"][1], j["rotation"][2]);
+		transform.scale = glm::vec3(j["scale"][0], j["scale"][1], j["scale"][2]);
 	}
+	
+	void ToJson(json& j,  MeshRenderer &meshRenderer) {
+		string meshName = "";
+		string shaderProgramName = UNLIT_SHADER;
+		//Maybe rewrite this to use a struct to handle the texture data
+		vector<string> textureNames;
+		vector<TextureType> textureTypes;
+		auto& mesh = activeGraphicsCore->activeMeshes[meshRenderer.meshID];
 
-	void ToJson(json& j, const MeshRenderer& meshRenderer) {
-
+		if (mesh) {
+			meshName = mesh.get()->name;
+			shaderProgramName = mesh.get()->shaderProgram.get()->GetId(); //Lol c++ 
+			for(const auto& texture : mesh.get()->textures) {
+				textureNames.push_back(texture.path);
+			}
+		}
+		j = json{
+			{"name", meshName},
+			{"shaderProgramName", shaderProgramName},
+			{"textures", textureNames},
+			{"textureTypes", textureTypes},
+			{ "isTransparent", meshRenderer.isTransparent } 
+		};
 	}
 	void FromJson(const json& j, MeshRenderer& meshRenderer) {
-
+		string meshName = j["name"];
+		string shaderProgramName = j["shaderProgramName"];
+		vector<string> textureNames = j["textures"].get<vector<string>>();
+		vector<TextureType> textureTypes = j["textureTypes"].get<vector<TextureType>>();
+		//We rebuild the textures
+		vector<Texture> textures;
+		for (int i = 0; i < textureNames.size(); i++) {
+			if (texturePaths.find(textureNames[i]) != texturePaths.end()) {
+				textures.push_back(Texture(textureNames[i], textureTypes[i]));
+			}
+			else {
+				LogWarning(format("Texture {} not found. Skipping", textureNames[i]));
+			}
+		}
+		//Then create and link the mesh
+		auto mesh = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(meshName,textures, shaderProgramName));
+		meshRenderer.meshID = mesh;
+		meshRenderer.isTransparent = j["isTransparent"];
 	}
 
 	void ToJson(json& j, const DirectionalLight& directionalLight) {
 
 	}
 	void FromJson(const json& j, DirectionalLight& directionalLight) {
-
+		
 	}
 
 	void ToJson(json& j, const PointLight& pointLight) {
@@ -268,11 +411,23 @@ namespace PopiEngine::Importer
 
 	}
 
-	void ToJson(json& j, const ECS::Camera& camera) {
-
+	void ToJson(json& j,  ECS::Camera& camera) {
+		j = json{
+			{"defaultUp", {camera.defaultUp.x, camera.defaultUp.y, camera.defaultUp.z}},
+			{"mode", static_cast<int>(camera.mode)},
+			{"fov", camera.fov},
+			{"nearPlane", camera.nearPlane},
+			{"farPlane", camera.farPlane},
+			{"orthographicSize", camera.orthographicSize}
+		};
 	}
 	void FromJson(const json& j, ECS::Camera& camera) {
-
+		camera.defaultUp = glm::vec3(j["defaultUp"][0], j["defaultUp"][1], j["defaultUp"][2]);
+		camera.mode = static_cast<CameraMode>(j["mode"].get<int>());
+		camera.fov = j["fov"];
+		camera.nearPlane = j["nearPlane"];
+		camera.farPlane = j["farPlane"];
+		camera.orthographicSize = j["orthographicSize"];
 	}
 #pragma endregion
 

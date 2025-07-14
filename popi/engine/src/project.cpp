@@ -19,6 +19,7 @@
 #include <utils.h>
 #include <fstream>
 #include <tiny_obj_loader.h>
+#include <importer.h>
 using namespace PopiEngine::Graphics;
 using namespace PopiEngine::UI;
 using namespace PopiEngine::ECS;
@@ -33,7 +34,7 @@ using std::string, std::runtime_error, std::format, std::ifstream, std::stringst
 
 namespace PopiEngine {
 
-    std::shared_ptr<Entity> testEntity;
+
 
     void Project::OnStart(){
         try {
@@ -51,12 +52,14 @@ namespace PopiEngine {
         graphicsCore = new GraphicsCore(settings.editorMode);
 		entityManager = new EntityManager(); //Initiaize Before UI Core
         uiCore = new UICore(graphicsCore->GetWindow());
+		Importer::currentScene = Scene(); //Initialize the current scene
 
 	}
 
     int Project::Run() {
         OnStart();
 
+        
         //Initialize shaders
         auto defaultShaderProgram = InitalizeShader("unlit");
         
@@ -70,7 +73,7 @@ namespace PopiEngine {
         vector<Texture> textures = { test };
         auto meshId = graphicsCore->LinkMesh(CreateCube("unlit", textures));
 
-        testEntity = entityManager->InstatiateEntity("Cube");
+        auto testEntity = entityManager->InstatiateEntity("Cube");
         testEntity->AttachTransform();
         testEntity->AttachMesh(meshId);
         Texture test2 = Texture("Metal plates 2", TextureType::DIFFUSE);
@@ -149,7 +152,7 @@ namespace PopiEngine {
 	}
 
     void Project::OnUpdate() {
-        testEntity->transform.get()->rotation.x += 0.4f;
+
     }
 
     void Project::Quit() {

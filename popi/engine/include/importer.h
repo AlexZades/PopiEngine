@@ -5,6 +5,7 @@
 #include <map>
 #include <filesystem>
 #include <glad/gl.h>
+#include <scene.h>
 namespace fs = std::filesystem;
 
 using std::string, std::vector, std::map;
@@ -22,6 +23,8 @@ namespace PopiEngine::Importer
 	struct texturePathDefinition {
 		string path;
 	};
+
+
 	//For use later when I implement assimp
 	enum ModelType {
 		OBJ,
@@ -43,6 +46,8 @@ namespace PopiEngine::Importer
 	extern map<string, texturePathDefinition> texturePaths;
 
 	extern map<string, meshPathDefinition> meshPaths;
+
+	extern Scene currentScene;
 
 	void ObjLoader(meshPathDefinition* meshDefinition);
 

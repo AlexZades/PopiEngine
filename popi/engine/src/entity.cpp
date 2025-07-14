@@ -5,11 +5,15 @@
 #include <memory>
 #include <entity.h>
 #include <utils.h>
+#include <scene.h>
+#include <importer.h>
 using namespace PopiEngine::ECS;
 using namespace PopiEngine::Logging;
+using namespace PopiEngine::Importer;
 using std::string, std::vector;
 
 namespace PopiEngine::ECS {
+
 
 	vector < std::shared_ptr<Entity>> entities = vector<std::shared_ptr<Entity>>();
 
@@ -142,8 +146,30 @@ namespace PopiEngine::ECS {
 		return entity;
 	}
 	void EntityManager::DestroyEntity(std::shared_ptr<Entity> entity) {
-	//Implement Later
+		if(entity == nullptr) {
+			LogError("Null Entity Recived on destory. Ignoring");
+			return;
+		}
+
+
+		LogNormal(std::format("Destroying entity: {}", entity->name));
+
+		entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
+		
+		entity.reset(); 
 	}
+    void EntityManager::OnNewScene()  
+    {  
+		LogNormal("Loading Into New Scene");  
+		// Clear all entities in the current scene
+		for (const auto& entity : entities) {
+            DestroyEntity(entity);  
+        }  
+        entities.clear();  
+		InstatiateEntity("Main Camera")->AttachCamera(); // Always a default camera entity
+        Importer::currentScene = Scene(); // Reset the current scene  
+      
+    }
 #pragma endregion
 
 }

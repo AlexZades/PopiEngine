@@ -75,8 +75,17 @@ namespace PopiEngine::UI
 	}
 
 	void UICore::FileMenu() {
-		if (ImGui::MenuItem("New Scene")) {}
-		if (ImGui::MenuItem("Open Scene", "Ctrl+O")) {}
+		if (ImGui::MenuItem("New Scene")) {
+			
+		}
+		if (ImGui::MenuItem("Open Scene")) 
+		{
+			
+		}
+		if (ImGui::MenuItem("Save Scene"))
+		{
+			currentScene.Save();
+		}
 	}
 	
 	void UICore::EditMenu() {
