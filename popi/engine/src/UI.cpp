@@ -521,9 +521,10 @@ namespace PopiEngine::UI
 			}
 			else {
 				ImGui::InputFloat("FOV", &camera->fov);
-				ImGui::InputFloat("Near Plane", &camera->nearPlane);
-				ImGui::InputFloat("Far Plane", &camera->farPlane);
+				
 			}
+			ImGui::InputFloat("Near Plane", &camera->nearPlane);
+			ImGui::InputFloat("Far Plane", &camera->farPlane);
 		}
 
 	}

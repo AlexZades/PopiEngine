@@ -13,6 +13,7 @@ namespace PopiEngine::Input
 {
 	InputCore::InputCore(GLFWwindow* window)
 	{
+		//glfwSetCursorPosCallback(window, CursorPositionCallback);
 	}
 	InputCore::~InputCore()
 	{
@@ -32,6 +33,19 @@ namespace PopiEngine::Input
 		else if (action == GLFW_RELEASE) {
 			LogNormal(format("Key Released: {}, Scancode: {}, Mods: {}", key, scancode, mods));
 		}
+	}
+
+	void InputCore::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+		if (action == GLFW_PRESS) {
+			LogNormal(format("Mouse Button Pressed: {}, Mods: {}", button, mods));
+		}
+		else if (action == GLFW_RELEASE) {
+			LogNormal(format("Mouse Button Released: {}, Mods: {}", button, mods));
+		}
+	}
+
+	void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+		LogNormal(format("Mouse Position: X: {}, Y: {}", xpos, ypos));
 	}
 
 }

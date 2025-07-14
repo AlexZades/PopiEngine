@@ -33,7 +33,7 @@ using namespace PopiEngine::ECS;
 using namespace PopiEngine::UI;
 namespace PopiEngine::Graphics 
 {
-    // Definition of the global variable
+    // This should be singleton
     GraphicsCore* activeGraphicsCore = nullptr;
     
 #pragma region Callbacks
@@ -44,6 +44,7 @@ namespace PopiEngine::Graphics
         activeGraphicsCore->windowWidth = width;
         activeGraphicsCore->windowHeight = height;
     }
+
     void ResizeFramebuffer(GLFWwindow* window, int width, int height) {
         // This function is called when the framebuffer size changes
         glViewport(0, 0, width, height);
