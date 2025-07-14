@@ -165,17 +165,54 @@ namespace PopiEngine::UI
 				if (!entities[selectedEntityIndex]->camera)
 					entities[selectedEntityIndex]->AttachCamera(std::make_shared<ECS::Camera>());
 			}
-			if( ImGui::MenuItem("Mesh Renderer"))
+			if (ImGui::MenuItem("Mesh Renderer"))
+				ImGui::OpenPopup("Add Mesh");
+			
+			ImGui::EndPopup();
+			AddMeshRendererMenu();
+		}
+		
+		
+	}
+
+	void UICore::AddMeshRendererMenu()
+	{
+		LogNormal("Opening Add Mesh Popup");
+		//ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+		//ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+		if (ImGui::BeginPopupModal("Add Mesh"))
+		{
+			LogNormal("Opening Add Mesh Popup");
+			ImGui::Text("Create a new mesh");
+			ImGui::Separator();
+			vector<string> items = { "cube","UVCube","Cylinder","Pyramid","Plane" };
+			for (const auto& [key, value] : PopiEngine::Importer::meshPaths) {
+				items.push_back(key);
+			}
+			if (ImGui::BeginCombo("Select Mesh", items[selectedMesh].c_str()))
 			{
-				ImGui::BeginPopup("Add Mesh");
-				AddMeshRendererMenu();
+				for (int i = 0; i < items.size(); i++)
+				{
+					const bool selected = (selectedMesh == i);
+					if (ImGui::Selectable(items[i].c_str(), selected))
+						selectedMesh = i;
+					if (selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			if (ImGui::Button("Create")) {
+				auto id = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(items[selectedMesh], vector<Texture>(), "unlit"));
+				entities[selectedEntityIndex]->AttachMesh(id);
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+				ImGui::CloseCurrentPopup();
 			}
 			ImGui::EndPopup();
 		}
-		
-
 	}
-
 	void UICore::ResourcesMenu()
 	{
 		ImGui::Begin("Resources");
@@ -216,44 +253,7 @@ namespace PopiEngine::UI
 	{
 	}
 
-	void UICore::AddMeshRendererMenu()
-	{
-		ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-		ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		if (ImGui::BeginPopupModal("Add Mesh", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-		{
-			ImGui::Text("Create a new mesh");
-			ImGui::Separator();
-			vector<string> items = { "cube","UVCube","Cylinder","Pyramid","Plane" };
-			for (const auto& [key, value] : PopiEngine::Importer::meshPaths) {
-				items.push_back(key);
-			}
-			if (ImGui::BeginCombo("Select Mesh", items[selectedMesh].c_str()))
-			{
-				for (int i = 0; i < items.size(); i++)
-				{
-					const bool selected = (selectedMesh == i);
-					if (ImGui::Selectable(items[i].c_str(), selected))
-						selectedMesh = i;
-					if (selected)
-						ImGui::SetItemDefaultFocus();
-				}
-				ImGui::EndCombo();
-			}
-			if (ImGui::Button("Create")) {
-				auto id = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(items[selectedMesh],vector<Texture>(),"unlit"));
-				entities[selectedEntityIndex]->AttachMesh(id);
-				ImGui::CloseCurrentPopup();
-			}
-            ImGui::SameLine();
-            if (ImGui::Button("Cancel", ImVec2(120, 0))) { ImGui::CloseCurrentPopup(); }
-			ImGui::SetItemDefaultFocus();
-			
-
-			
-		}
-
-	}
+	
 	
 
 	void UICore::DrawEditor(GLuint viewTexture) {
@@ -411,11 +411,29 @@ namespace PopiEngine::UI
 			}
 			ImGui::Checkbox("Transparent:", &meshRenderer->isTransparent);
 			ImGui::Text(format("{}", mesh->path).c_str());
+
+			if(ImGui::Button("Add Texture")) 
+				ImGui::OpenPopup("Add Texture");
+				//ImGui::OpenPopup("Add Component");
+				
+				MeshGizmoAddTexture(meshRenderer);
+			
+
 			if (mesh->textures.size() > 0) {
+				//Display the textures used by the mesh
 				if (ImGui::TreeNode("Texture")) {
 					for (const auto meshTexture : mesh->textures) {
-						ImGui::Text(meshTexture.path.c_str());
+						string path = meshTexture.path;
+						string name = meshTexture.name;
+						ImGui::Text(name.c_str());
 						ImGui::Image((ImTextureID)meshTexture.id, ImVec2(64, 64));
+						//Button to remove the texture
+						if (ImGui::SmallButton(format("Remove Texture##{}", name).c_str())) {
+							//Remove the texture from the mesh 
+							mesh->textures.erase(std::remove_if(mesh->textures.begin(), mesh->textures.end(),
+								[&](const Texture& t) { return t.name == name; }), mesh->textures.end());
+						}
+						ImGui::Text(path.c_str());
 					}
 					ImGui::TreePop();
 				}
@@ -432,6 +450,27 @@ namespace PopiEngine::UI
 			}
 			
 			
+		}
+	}
+
+	void UICore::MeshGizmoAddTexture(std::shared_ptr<MeshRenderer> meshRenderer)
+	{
+		auto mesh = activeGraphicsCore->activeMeshes[meshRenderer->meshID];
+		if (!mesh) {
+			return;
+		}
+		if (ImGui::BeginPopup("Add Texture"))
+		{
+			
+			for(const auto& [name, path] : texturePaths) {
+				if (ImGui::MenuItem(name.c_str())) {
+					//Add logic here to change texture type once its setup 
+					auto texture = Texture(name, TextureType::DIFFUSE);
+					mesh->textures.push_back(texture);
+				}
+			}
+			
+			ImGui::EndPopup();
 		}
 	}
 

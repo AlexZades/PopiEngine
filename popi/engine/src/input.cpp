@@ -21,4 +21,17 @@ namespace PopiEngine::Input
 
 	}
 
+	void InputCore::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+		LogNormal(format("Scroll: xoffset: {}, yoffset: {}", xoffset, yoffset));
+	}
+
+	void InputCore::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+		if (action == GLFW_PRESS) {
+			LogNormal(format("Key Pressed: {}, Scancode: {}, Mods: {}", key, scancode, mods));
+		}
+		else if (action == GLFW_RELEASE) {
+			LogNormal(format("Key Released: {}, Scancode: {}, Mods: {}", key, scancode, mods));
+		}
+	}
+
 }

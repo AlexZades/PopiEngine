@@ -14,10 +14,18 @@ namespace PopiEngine::Input
 {
 	class InputCore {
 		public:
-			
+			vector<int> pressedKeys;
 			InputCore(GLFWwindow* window);
 			~InputCore();
+
 			void ProcessInput(GLFWwindow* window);
+
+			//GLFW Callbacks
+			void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+			void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+			void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+			void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos);
+			
 	};
 	
 	

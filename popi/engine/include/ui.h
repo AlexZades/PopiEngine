@@ -54,6 +54,7 @@ namespace PopiEngine::UI
 		//Inspector gizmo draw calls
 		void TransformGizmo(std::shared_ptr<Transform> transform);
 		void MeshRendererGizmo(std::shared_ptr<MeshRenderer> meshRenderer);
+		void MeshGizmoAddTexture(std::shared_ptr<MeshRenderer> meshRenderer);
 		void CameraGizmo(std::shared_ptr<ECS::Camera> camera);
 		void PontLightGizmo(std::shared_ptr<PointLight> pointLight);
 		void DirectionalLightGizmo(std::shared_ptr<DirectionalLight> directionalLight);

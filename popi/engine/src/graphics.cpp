@@ -721,43 +721,63 @@ namespace PopiEngine::Graphics
 
              }
              
-             glUniform1i(glGetUniformLocation(shaderProgram->GetId(), (name + number).c_str()), i);
+             string uniformName = name + number;
+             shaderProgram->setInt(uniformName, i);
 			 glBindTexture(GL_TEXTURE_2D, textures[i].id);
          }
+		
 		 //Set shader material properties
          shaderProgram->setVec3("DIFFUSE_COLOR", material.diffuse);
+
+         //This is just to get the shader working, please fix it since is not performant
+         std::chrono::time_point<std::chrono::system_clock> now =
+             std::chrono::system_clock::now();
+         int time = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+		 //LogNormal(std::format("Time: {}", float(time % 1000000)));
+         shaderProgram->setFloat("TIME", 0.0f);
      }
 #pragma endregion
 
 #pragma region Textures
 Texture::Texture(string name, TextureType type) {
+	this->name = name;
     if(texturePaths.find(name) == texturePaths.end()) {
         LogError(std::format("Texture {} not found!", name));
         return;
 	}
+
     this->path = texturePaths[name].path;
     this->type = type;
-	id = 0;
+    id = 0;
 
+    // Flip texture vertically for OpenGL
+    stbi_set_flip_vertically_on_load(true);
+    
     int width, height, nrChannels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     if (data == nullptr) {
         LogError(std::format("Failed to load texture: {}", path));
         return;
     }
+    
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
+    
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	//For the look of the engine we go full linear filtering :D
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    
     if(nrChannels == 4)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
     else
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    
     glGenerateMipmap(GL_TEXTURE_2D);
-	LogNormal(std::format("Loaded texture: {} with id: {}", path, id));
+    LogNormal(std::format("Loaded texture: {} with id: {}", path, id));
     stbi_image_free(data);
 }
-
 #pragma endregion
 
 #pragma region Default Mesh Functions

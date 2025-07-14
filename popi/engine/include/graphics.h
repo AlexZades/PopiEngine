@@ -50,6 +50,7 @@ namespace PopiEngine::Graphics
 		GLuint id;
 		TextureType type;
 		string path;
+		string name;
 		Texture(string name, TextureType type);
 	};
 
