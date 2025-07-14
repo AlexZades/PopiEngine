@@ -182,7 +182,9 @@ namespace PopiEngine::Graphics
     /// </summary>
     void GraphicsCore::RenderEntities(glm::mat4 proj, glm::mat4 view) 
     {
+        //To handle transparent entites put them in this array
 		auto depthSortedEntities = std::map<float,std::shared_ptr<Entity>>();
+
         for (const auto& entityPtr : entities) {
             auto entity = entityPtr.get();
             //Check several conditions to see if we should render the entity
@@ -207,17 +209,19 @@ namespace PopiEngine::Graphics
 						float distance = glm::length(transform->position - GetActiveCamera()->transform->position);
 						depthSortedEntities[distance] = entityPtr; // Sort by distance for transparency
                     }
-                    auto mesh = activeMeshes[meshRenderer->meshID];
-                    if (mesh) {
-                        glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
-                        glm::mat4 rotation = glm::eulerAngleYXZ(
-                            glm::radians(transform->rotation.x),
-                            glm::radians(transform->rotation.y),
-                            glm::radians(transform->rotation.z)
-                        );
-                        glm::mat4 scale = glm::scale(glm::mat4(1.0f), transform->scale);
-                        glm::mat4 model = translation * rotation * scale;
-                        mesh->Draw(model, view, proj);
+                    else {
+                        auto mesh = activeMeshes[meshRenderer->meshID];
+                        if (mesh) {
+                            glm::mat4 translation = glm::translate(glm::mat4(1.0f), transform->position);
+                            glm::mat4 rotation = glm::eulerAngleYXZ(
+                                glm::radians(transform->rotation.x),
+                                glm::radians(transform->rotation.y),
+                                glm::radians(transform->rotation.z)
+                            );
+                            glm::mat4 scale = glm::scale(glm::mat4(1.0f), transform->scale);
+                            glm::mat4 model = translation * rotation * scale;
+                            mesh->Draw(model, view, proj);
+                        }
                     }
                 }
             }

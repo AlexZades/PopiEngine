@@ -41,6 +41,7 @@ namespace PopiEngine::UI
 		void InspectorMenu();
 		void AddComponentMenu();
 		int selectedMesh = 0;
+		bool showMeshSelection = false; // Flag to show/hide mesh selection UI
 
 		void AddMeshRendererMenu();
 		//Resources Menu

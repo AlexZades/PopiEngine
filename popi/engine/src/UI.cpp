@@ -166,53 +166,68 @@ namespace PopiEngine::UI
 					entities[selectedEntityIndex]->AttachCamera(std::make_shared<ECS::Camera>());
 			}
 			if (ImGui::MenuItem("Mesh Renderer"))
-				ImGui::OpenPopup("Add Mesh");
-			
+			{
+				if(!entities[selectedEntityIndex]->meshRenderer) {
+					// Open the mesh selection UI
+					showMeshSelection = true; 
+				}
+				
+			}
 			ImGui::EndPopup();
-			AddMeshRendererMenu();
 		}
-		
-		
+
+		if(showMeshSelection) {
+			ImGui::SetNextWindowPos(ImGui::GetCursorScreenPos());
+			ImGui::SetNextWindowSize(ImVec2(300, 200));
+			ImGui::Begin("Select Mesh", &showMeshSelection, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+			
+			// Add the mesh renderer selection UI
+			AddMeshRendererMenu();
+			
+			ImGui::End();
+		}
 	}
 
-	void UICore::AddMeshRendererMenu()
-	{
-		LogNormal("Opening Add Mesh Popup");
-		//ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-		//ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-		if (ImGui::BeginPopupModal("Add Mesh"))
-		{
-			LogNormal("Opening Add Mesh Popup");
-			ImGui::Text("Create a new mesh");
-			ImGui::Separator();
-			vector<string> items = { "cube","UVCube","Cylinder","Pyramid","Plane" };
-			for (const auto& [key, value] : PopiEngine::Importer::meshPaths) {
-				items.push_back(key);
-			}
-			if (ImGui::BeginCombo("Select Mesh", items[selectedMesh].c_str()))
-			{
-				for (int i = 0; i < items.size(); i++)
-				{
-					const bool selected = (selectedMesh == i);
-					if (ImGui::Selectable(items[i].c_str(), selected))
-						selectedMesh = i;
-					if (selected)
-						ImGui::SetItemDefaultFocus();
+	void UICore::AddMeshRendererMenu(){
+		
+				ImGui::Separator();
+				vector<string> items;
+				for (const auto& [key, value] : PopiEngine::Importer::meshPaths) {
+					items.push_back(key);
 				}
-				ImGui::EndCombo();
+				
+
+				if (selectedMesh >= items.size()) {
+					selectedMesh = 0;	
+				}
+				
+				if (ImGui::BeginCombo("Mesh Type", items[selectedMesh].c_str()))
+				{
+					for (int i = 0; i < items.size(); i++)
+					{
+						const bool selected = (selectedMesh == i);
+						if (ImGui::Selectable(items[i].c_str(), selected))
+							selectedMesh = i;
+						if (selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndCombo();
+				}
+				
+				ImGui::Spacing();
+				
+				if (ImGui::Button("Create Mesh", ImVec2(-1, 0))) {
+					auto id = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(items[selectedMesh], vector<Texture>(), "unlit"));
+					entities[selectedEntityIndex]->AttachMesh(id);
+					showMeshSelection = false; 
+				}
+				
+				if (ImGui::Button("Cancel", ImVec2(-1, 0))) {
+					showMeshSelection = false;
+				}
 			}
-			if (ImGui::Button("Create")) {
-				auto id = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(items[selectedMesh], vector<Texture>(), "unlit"));
-				entities[selectedEntityIndex]->AttachMesh(id);
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-				ImGui::CloseCurrentPopup();
-			}
-			ImGui::EndPopup();
-		}
-	}
+
+	
 	void UICore::ResourcesMenu()
 	{
 		ImGui::Begin("Resources");
