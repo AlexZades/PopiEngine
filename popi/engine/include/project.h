@@ -13,10 +13,12 @@ using namespace PopiEngine::UI;
 //Modify project.cpp to change the behavior
 namespace PopiEngine {
 	extern std::shared_ptr<EntityManager> entityManagerRef;
+	extern float deltaTime;
 	class Project {
 	public:
 		Project() = default;
 
+	
 		virtual void OnStart();
 		virtual void OnUpdate();
 		virtual void OnFixedUpdate();
@@ -29,6 +31,8 @@ namespace PopiEngine {
 		GraphicsCore* graphicsCore;
 		std::shared_ptr <EntityManager> entityManager;
 		Settings settings = Settings();
+	private:
+		float lastFrameTime = 0;
 	};
 	
 
