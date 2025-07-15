@@ -23,7 +23,7 @@ namespace PopiEngine::ECS {
 		std::shared_ptr<PointLight> pointLight;
 		std::shared_ptr<Camera> camera;
 		std::shared_ptr<ProceduralTerrain> proceduralTerrain;
-
+        std::shared_ptr<ScriptHook> scriptHook; //Make this a vector later
         Entity(string _name = "entity");
         ~Entity();
         
@@ -41,7 +41,8 @@ namespace PopiEngine::ECS {
 		void AttachCamera(std::shared_ptr<Camera> camera);
 		void AttachProceduralTerrain();
 		void AttachProceduralTerrain(std::shared_ptr<ProceduralTerrain> pt);
-
+        void AttachScriptHook();
+        void AttachScriptHook(std::shared_ptr<ScriptHook> scriptHook);
         void RemoveComponenet(ActiveComponents target);
 		//Bit mask to check which components are active
 #pragma endregion

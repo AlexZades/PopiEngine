@@ -6,7 +6,7 @@
 
 
 using json = nlohmann::json;
-
+using std::string, std::format, std::vector, std::shared_ptr;
 /// <summary>
 /// I wanted to make a simple ECS system for PopiEngine.
 /// The way the system works is each entity can have multiple components.
@@ -21,7 +21,8 @@ namespace PopiEngine::ECS {
 		DIRECTIONAL_LIGHT = 1 << 2, // 0100
 		POINT_LIGHT = 1 << 3, // 1000
 		PROCEDURAL_TERRAIN = 1 << 4, // 10000
-		CAMERA = 1 << 5 // 100000
+		CAMERA = 1 << 5, // 100000
+		SCRIPT_HOOK = 1 << 6 // 1000000
 	};
 
 	enum CameraMode {
@@ -86,12 +87,9 @@ namespace PopiEngine::ECS {
 		
 	};
 
-	enum InputType {
-		CameraMovemen,
-		PlayerMovement
-	};
-	struct InputComponet {
-		InputType type;
+	struct ScriptHook {
+		string scriptName = "";
+		bool isActive = true; //If the script is active or not
 	};
 }
 using namespace PopiEngine::ECS;
@@ -112,6 +110,9 @@ namespace PopiEngine::Importer {
 
 	void ToJson(json& j,  ECS::Camera& camera);
 	void FromJson(const json& j, ECS::Camera& camera);
+
+	void ToJson(json& j, ScriptHook& scriptHook);
+	void FromJson(const json& j, ScriptHook& scriptHook);
 
 #pragma endregion
 

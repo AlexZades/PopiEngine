@@ -1,0 +1,180 @@
+{
+    "format version": 1,
+    "scene": {
+        "entities": [
+            {
+                "camera": {
+                    "defaultUp": [
+                        0.0,
+                        1.0,
+                        0.0
+                    ],
+                    "farPlane": 100.0,
+                    "fov": 70.0,
+                    "mode": 1,
+                    "nearPlane": 0.10000000149011612,
+                    "orthographicSize": 10.0
+                },
+                "name": "Main Camera",
+                "script_hook": {
+                    "isActive": true,
+                    "scriptName": "PlayerInput"
+                },
+                "transform": {
+                    "position": [
+                        -1.188000202178955,
+                        5.0,
+                        4.190001487731934
+                    ],
+                    "rotation": [
+                        -45.0,
+                        -80.0,
+                        0.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "mesh_renderer": {
+                    "isTransparent": false,
+                    "material": {
+                        "diffuse": [
+                            0.49252697825431824,
+                            0.6345750093460083,
+                            0.9754902124404907
+                        ],
+                        "shininess": -431602080.0,
+                        "specular": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ]
+                    },
+                    "name": "cube",
+                    "shaderProgramName": "unlit",
+                    "textureTypes": [
+                        0
+                    ],
+                    "textures": [
+                        "plane"
+                    ]
+                },
+                "name": "Cube",
+                "script_hook": {
+                    "isActive": true,
+                    "scriptName": "PlayerInput"
+                },
+                "transform": {
+                    "position": [
+                        -0.21600022912025452,
+                        -0.5,
+                        -0.45900028944015503
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "scale": [
+                        0.5,
+                        0.5,
+                        0.5
+                    ]
+                }
+            },
+            {
+                "mesh_renderer": {
+                    "isTransparent": false,
+                    "material": {
+                        "diffuse": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "shininess": -431602080.0,
+                        "specular": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ]
+                    },
+                    "name": "plane",
+                    "shaderProgramName": "unlit",
+                    "textureTypes": [
+                        0
+                    ],
+                    "textures": [
+                        "Planks"
+                    ]
+                },
+                "name": "Plane",
+                "transform": {
+                    "position": [
+                        0.0,
+                        -1.0,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "scale": [
+                        10.0,
+                        1.0,
+                        10.0
+                    ]
+                }
+            },
+            {
+                "mesh_renderer": {
+                    "isTransparent": false,
+                    "material": {
+                        "diffuse": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ],
+                        "shininess": -431602080.0,
+                        "specular": [
+                            1.0,
+                            1.0,
+                            1.0
+                        ]
+                    },
+                    "name": "plane",
+                    "shaderProgramName": "unlit",
+                    "textureTypes": [
+                        0
+                    ],
+                    "textures": [
+                        "light_water"
+                    ]
+                },
+                "name": "Plane",
+                "transform": {
+                    "position": [
+                        0.0,
+                        -1.100000023841858,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "scale": [
+                        30.0,
+                        1.0,
+                        30.0
+                    ]
+                }
+            }
+        ],
+        "name": "0_test"
+    }
+}

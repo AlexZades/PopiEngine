@@ -385,6 +385,19 @@ namespace PopiEngine::Importer
 				}
 			}
 
+			if (activeComponents & ActiveComponents::SCRIPT_HOOK) {
+				std::shared_ptr<ScriptHook> scriptHook = entity->scriptHook;
+				if (scriptHook != nullptr) {
+					json scriptHookJson;
+					ToJson(scriptHookJson, *scriptHook.get());
+					entityJson["script_hook"] = scriptHookJson;
+					LogNormal(format("Serialized script hook for entity: {}", entity->name));
+				}
+				else {
+					LogWarning(format("Entity {} has SCRIPT_HOOK flag but no script hook component.", entity->name));
+				}
+			}
+
             entitiesJson.push_back(entityJson);
         }  
         j["scene"]["entities"] = entitiesJson;
@@ -441,6 +454,15 @@ namespace PopiEngine::Importer
 				FromJson(entityJson["camera"], camera);
 				entity->AttachCamera(std::make_shared<ECS::Camera>(camera));
 			}
+			if (entityJson.contains("script_hook") && entityJson["script_hook"].is_object()) {
+				LogNormal(format("Deserializing script hook for entity: {}", ename));
+				ScriptHook scriptHook;
+				FromJson(entityJson["script_hook"], scriptHook);
+				entity->AttachScriptHook(std::make_shared<ScriptHook>(scriptHook));
+			}
+			else {
+				LogWarning(format("Entity {} has no components.", ename));
+			}
 		}
 
 	}
@@ -467,6 +489,7 @@ namespace PopiEngine::Importer
 		//Maybe rewrite this to use a struct to handle the texture data
 		vector<string> textureNames;
 		vector<TextureType> textureTypes;
+		json materialJson;
 		auto& mesh = activeGraphicsCore->activeMeshes[meshRenderer.meshID];
 
 		if (mesh) {
@@ -478,12 +501,20 @@ namespace PopiEngine::Importer
 				textureNames.push_back(texture.name);
 				textureTypes.push_back(texture.type);
 			}
+			auto material = mesh.get()->material;	
+			materialJson =
+			json{
+				{"diffuse", {material.diffuse.r, material.diffuse.g, material.diffuse.b}},
+				{"specular", {material.specular.r, material.specular.g, material.specular.b}},
+				{"shininess", material.shininess}
+			};
 		}
 		j = json{
 			{"name", meshName},
 			{"shaderProgramName", shaderProgramName},
 			{"textures", textureNames},
 			{"textureTypes", textureTypes},
+			{"material", materialJson},
 			{ "isTransparent", meshRenderer.isTransparent } 
 		};
 	}
@@ -504,8 +535,21 @@ namespace PopiEngine::Importer
 				LogWarning(format("Texture {} not found. Skipping", textureNames[i]));
 			}
 		}
+
 		//Then create and link the mesh
 		auto mesh = activeGraphicsCore->LinkMesh(std::make_shared<Mesh>(meshName,textures, shaderProgramName));
+		try {
+			Material material;
+			material.diffuse = glm::vec3(j["material"]["diffuse"][0], j["material"]["diffuse"][1], j["material"]["diffuse"][2]);
+			material.specular = glm::vec3(j["material"]["specular"][0], j["material"]["specular"][1], j["material"]["specular"][2]);
+			material.shininess = j["material"]["shininess"];
+			activeGraphicsCore->activeMeshes[mesh]->SetMaterial(material);
+		}
+		catch (const std::exception& e) {
+			LogError(format("Failed to deserialize material for mesh renderer: {}", e.what()));
+			return;
+		}
+
 		meshRenderer.meshID = mesh;
 		meshRenderer.isTransparent = j["isTransparent"];
 	}
@@ -541,6 +585,20 @@ namespace PopiEngine::Importer
 		camera.nearPlane = j["nearPlane"];
 		camera.farPlane = j["farPlane"];
 		camera.orthographicSize = j["orthographicSize"];
+	}
+	void ToJson(json& j, ScriptHook& scriptHook)
+	{
+		j = json{
+			{"scriptName", scriptHook.scriptName},
+			{"isActive", scriptHook.isActive}
+		};
+		LogNormal(format("Serializing ScriptHook: {}", scriptHook.scriptName));
+	}
+	void FromJson(const json& j, ScriptHook& scriptHook)
+	{
+		scriptHook.scriptName = j["scriptName"].get<string>();
+		scriptHook.isActive = j["isActive"].get<bool>();
+		LogNormal(format("Deserializing ScriptHook: {}", scriptHook.scriptName));
 	}
 #pragma endregion
 

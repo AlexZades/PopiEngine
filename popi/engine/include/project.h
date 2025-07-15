@@ -31,8 +31,6 @@ namespace PopiEngine {
 		GraphicsCore* graphicsCore;
 		std::shared_ptr <EntityManager> entityManager;
 		Settings settings = Settings();
-	private:
-		float lastFrameTime = 0;
 	};
 	
 

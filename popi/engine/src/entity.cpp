@@ -84,6 +84,18 @@ namespace PopiEngine::ECS {
 		LogNormal(std::format("Attaching ProceduralTerrain to entity: {}", name));
 	}
 
+	void Entity::AttachScriptHook()
+	{
+		scriptHook = std::make_shared<ScriptHook>();
+		LogNormal(std::format("Attaching ScriptHook to entity: {}", name));
+	}
+
+	void Entity::AttachScriptHook(std::shared_ptr<ScriptHook> scriptHook)
+	{
+		this->scriptHook = scriptHook;
+		LogNormal(std::format("Attaching ScriptHook to entity: {}", name));
+	}
+
 	void Entity::RemoveComponenet(ActiveComponents target)
 	{
 		switch (target) {
@@ -111,6 +123,10 @@ namespace PopiEngine::ECS {
 				proceduralTerrain.reset();
 				LogNormal(std::format("Removing ProceduralTerrain from entity: {}", name));
 				break;
+			case ActiveComponents::SCRIPT_HOOK:
+				scriptHook.reset();
+				LogNormal(std::format("Removing ScriptHook from entity: {}", name));
+				break;
 			
 		}
 	}
@@ -128,6 +144,10 @@ namespace PopiEngine::ECS {
 			components |= ActiveComponents::POINT_LIGHT;
 		if (camera != nullptr)
 			components |= ActiveComponents::CAMERA;
+		if (proceduralTerrain != nullptr)
+			components |= ActiveComponents::PROCEDURAL_TERRAIN;
+		if (scriptHook != nullptr)
+			components |= ActiveComponents::SCRIPT_HOOK;
 		attachedComponents = static_cast<ActiveComponents>(components);
 		return attachedComponents;
 	}	

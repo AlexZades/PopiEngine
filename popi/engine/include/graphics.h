@@ -105,6 +105,7 @@ namespace PopiEngine::Graphics
 		GLuint attachedShaderIDs[2]= {};
 	};
 
+
 	class Mesh {
 	public:
 		vector<Vertex> vertices;
@@ -120,6 +121,7 @@ namespace PopiEngine::Graphics
 
 		Mesh(vector<Vertex> vertices, vector<GLuint> indices, vector<Texture> textures, string shaderProgramName);
 		Mesh(string name, vector<Texture> textures, string shaderProgramName);
+		void SetMaterial(Material material);
 		void Draw(glm::mat4 model, glm::mat4 view, glm::mat4 proj);
 
 	private:

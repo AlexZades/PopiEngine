@@ -61,6 +61,8 @@ namespace PopiEngine::UI
 		void CameraGizmo(std::shared_ptr<ECS::Camera> camera);
 		void PontLightGizmo(std::shared_ptr<PointLight> pointLight);
 		void DirectionalLightGizmo(std::shared_ptr<DirectionalLight> directionalLight);
+		void ProceduralTerrainGizmo(std::shared_ptr<ProceduralTerrain> proceduralTerrain);
+		void ScriptHookGizmo(std::shared_ptr<ScriptHook> scriptHook);
 	};
 
 	struct UIElement {

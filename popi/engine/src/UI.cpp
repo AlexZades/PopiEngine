@@ -102,6 +102,7 @@ namespace PopiEngine::UI
 	}
 
 	void UICore::FileMenu() {
+
 		if (ImGui::MenuItem("New Scene")) {
 			currentScene.New(); 
 		}
@@ -211,6 +212,21 @@ namespace PopiEngine::UI
 					showMeshSelection = true; 
 				}
 				
+			}
+			if (ImGui::MenuItem("Directional Light"))
+			{
+				if (!entities[selectedEntityIndex]->directionalLight)
+					entities[selectedEntityIndex]->AttachDirectionalLight(std::make_shared<DirectionalLight>());
+			}
+			if (ImGui::MenuItem("Point Light"))
+			{
+				if (!entities[selectedEntityIndex]->pointLight)
+					entities[selectedEntityIndex]->AttachPointLight(std::make_shared<PointLight>());
+			}
+			if (ImGui::MenuItem("Script Hook"))
+			{
+				if (!entities[selectedEntityIndex]->scriptHook)
+					entities[selectedEntityIndex]->AttachScriptHook(std::make_shared<ScriptHook>());
 			}
 			ImGui::EndPopup();
 		}
@@ -461,7 +477,15 @@ namespace PopiEngine::UI
 		if(activeComponents & CAMERA) {
 			CameraGizmo(entity->camera);
 		}
-
+		if(activeComponents & DIRECTIONAL_LIGHT) {
+			DirectionalLightGizmo(entity->directionalLight);
+		}
+		if(activeComponents & POINT_LIGHT) {
+			PontLightGizmo(entity->pointLight);
+		}
+		if(activeComponents & SCRIPT_HOOK) {
+			ScriptHookGizmo(entity->scriptHook);
+		}
 		ImGui::End();
 	}
 
@@ -606,6 +630,23 @@ namespace PopiEngine::UI
 
 	void UICore::DirectionalLightGizmo(std::shared_ptr<DirectionalLight> directionalLight)
 	{
+		//Implement Later
+	}
+
+	void UICore::ScriptHookGizmo(std::shared_ptr<ScriptHook> scriptHook)
+	{
+		ImGui::SeparatorText("Script Hook"); ImGui::SameLine(); if (ImGui::SmallButton("X##scriptHook")) {
+			entities[selectedEntityIndex]->RemoveComponenet(ActiveComponents::SCRIPT_HOOK);
+		}
+		if (scriptHook) {
+			static char scriptName[128];
+			strncpy(scriptName, scriptHook->scriptName.c_str(), sizeof(scriptName) - 1);
+			scriptName[sizeof(scriptName) - 1] = '\0';
+
+			ImGui::InputText("ScriptName", scriptName, IM_ARRAYSIZE(scriptName));
+			scriptHook->scriptName= scriptName;
+			ImGui::Checkbox("Is Active", &scriptHook->isActive);
+		}
 	}
 
 #pragma endregion

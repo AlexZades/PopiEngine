@@ -11,41 +11,49 @@ using namespace PopiEngine::Logging;
 using std::string, std::format, std::vector;
 namespace PopiEngine::Input
 {
-	InputCore::InputCore(GLFWwindow* window)
+	std::shared_ptr<InputCore> inputCoreRef = std::make_shared<InputCore>();
+
+	InputCore::InputCore()
 	{
-		//glfwSetCursorPosCallback(window, CursorPositionCallback);
+		
 	}
 	InputCore::~InputCore()
 	{
 	}
-	void InputCore::ProcessInput(GLFWwindow* window) {
-
-	}
-
-	void InputCore::ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+	void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
 		LogNormal(format("Scroll: xoffset: {}, yoffset: {}", xoffset, yoffset));
 	}
 
-	void InputCore::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 		if (action == GLFW_PRESS) {
-			LogNormal(format("Key Pressed: {}, Scancode: {}, Mods: {}", key, scancode, mods));
+			inputCoreRef->keysPressed.insert(key);
 		}
 		else if (action == GLFW_RELEASE) {
-			LogNormal(format("Key Released: {}, Scancode: {}, Mods: {}", key, scancode, mods));
+			inputCoreRef->keysPressed.erase(key);
 		}
 	}
 
-	void InputCore::MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 		if (action == GLFW_PRESS) {
-			LogNormal(format("Mouse Button Pressed: {}, Mods: {}", button, mods));
+			inputCoreRef->mousePressed.insert(button);
 		}
 		else if (action == GLFW_RELEASE) {
-			LogNormal(format("Mouse Button Released: {}, Mods: {}", button, mods));
+			inputCoreRef->mousePressed.erase(button);
 		}
 	}
 
 	void CursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
-		LogNormal(format("Mouse Position: X: {}, Y: {}", xpos, ypos));
+		inputCoreRef->mouseX = xpos;
+		inputCoreRef->mouseY = ypos;
+	}
+
+	void InputCore::LinkCallbacks(GLFWwindow* window) {
+		LogNormal("Linking input callbacks to window");
+		glfwSetScrollCallback(window, ScrollCallback);
+		glfwSetKeyCallback(window, KeyCallback);
+		glfwSetMouseButtonCallback(window, MouseButtonCallback);
+		glfwSetCursorPosCallback(window, CursorPositionCallback);
+		LogNormal("Input callbacks linked");
 	}
 
 }

@@ -20,10 +20,13 @@
 #include <fstream>
 #include <tiny_obj_loader.h>
 #include <importer.h>
+#include <popiinput.h>
+#include <scripts.h>    
 using namespace PopiEngine::Graphics;
 using namespace PopiEngine::UI;
 using namespace PopiEngine::ECS;
 using namespace PopiEngine::Logging;
+using namespace PopiEngine::Input;
 
 using std::string, std::runtime_error, std::format, std::ifstream, std::stringstream;
 
@@ -35,7 +38,7 @@ using std::string, std::runtime_error, std::format, std::ifstream, std::stringst
 namespace PopiEngine {
 
     
-
+	float deltaTime = 0.0f; // Global delta time variable
     std::shared_ptr<EntityManager> entityManagerRef; //PLEASE make entity manager a singlton 
 
 
@@ -55,9 +58,10 @@ namespace PopiEngine {
         graphicsCore = new GraphicsCore(settings.editorMode);
 		entityManager = std::make_shared<EntityManager>(); //Initiaize Before UI Core
         entityManagerRef = entityManager; //this is a sin against c++ programing
+        inputCoreRef->LinkCallbacks(graphicsCore->GetWindow()); //Link input callbacks to the window
         uiCore = new UICore(graphicsCore->GetWindow());
 		Importer::currentScene = Scene(); //Initialize the current scene
-
+		
 	}
 
     int Project::Run() {
@@ -73,8 +77,11 @@ namespace PopiEngine {
      
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Use float literals to avoid warnings
 
-       
+        auto lastFrameTime = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
         while (!glfwWindowShouldClose(graphicsCore->GetWindow())) {
+			deltaTime = std::chrono::duration<float>(now - lastFrameTime).count();
+            
 			graphicsCore->FrameStart();
 			uiCore->NewFrame();
             if(settings.editorMode)
@@ -86,7 +93,7 @@ namespace PopiEngine {
             ImGui::Render();
 
 			graphicsCore->Draw();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            //std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
         OnQuit();
@@ -113,7 +120,7 @@ namespace PopiEngine {
 	}
 
     void Project::OnUpdate() {
-
+		PopiEngine::Scripts::OnUpdate(); //Call the scripts update method
     }
 
     void Project::Quit() {

@@ -35,7 +35,7 @@ add_executable(${PROJECT_NAME}
         ${POPI_INCLUDE}/settings.h
         ${POPI_INCLUDE}/popiinput.h
 
- "popi/engine/src/project.cpp" "popi/engine/include/utils.h" "popi/engine/src/utils.cpp" "popi/engine/include/components.h"  "popi/engine/include/entity.h" "popi/engine/include/scene.h" "popi/engine/include/terrain.h" "popi/engine/src/terrain.cpp"  "popi/engine/include/camera.h" "popi/engine/src/camera.cpp" "popi/engine/src/entity.cpp" "popi/engine/src/input.cpp" "popi/engine/include/s_playerInput.h")
+ "popi/engine/src/project.cpp" "popi/engine/include/utils.h" "popi/engine/src/utils.cpp" "popi/engine/include/components.h"  "popi/engine/include/entity.h" "popi/engine/include/scene.h" "popi/engine/include/terrain.h" "popi/engine/src/terrain.cpp"  "popi/engine/include/camera.h" "popi/engine/src/camera.cpp" "popi/engine/src/entity.cpp" "popi/engine/src/input.cpp" "popi/engine/include/s_playerInput.h" "popi/engine/include/scripts.h")
 target_include_directories(
         ${PROJECT_NAME}
         PUBLIC

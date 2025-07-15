@@ -628,7 +628,6 @@ namespace PopiEngine::Graphics
 
 		 InitalizeMesh();
      }
-
      Mesh::Mesh(string name, vector<Texture> textures, string shaderProgramName)
      {
          if (shaderPrograms.find(shaderProgramName) == shaderPrograms.end()) {
@@ -651,6 +650,11 @@ namespace PopiEngine::Graphics
          shaderProgram = shaderPrograms[shaderProgramName];
 
          InitalizeMesh();
+     }
+
+     void Mesh::SetMaterial(Material material)
+     {
+         this->material = material;
      }
 
      void Mesh::InitalizeMesh() {
