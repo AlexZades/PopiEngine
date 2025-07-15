@@ -44,3 +44,8 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 }
+
+void RunPlayMode() {
+	Project* playmode = new Project();
+	playmode->Run();
+}

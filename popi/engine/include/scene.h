@@ -17,10 +17,10 @@ namespace PopiEngine::Importer {
 
 		
 		void Save();
-		void Load();
-
+		void Load(string path);
+		void New();
 		json toJson();
-		void FromJson(const json& _json);
+		void fromJson(const json& _json);
 		Scene(string name ="scene") {
 			this->name = name;
 			sceneEntities = entities; //Initialize with the global entities vector

@@ -22,6 +22,7 @@ namespace PopiEngine::Importer
 
 	struct texturePathDefinition {
 		string path;
+
 	};
 
 
@@ -39,6 +40,10 @@ namespace PopiEngine::Importer
 	
 	};
 
+	struct scenePathDefinition {
+		string path;
+
+	};
 
 
 	extern map<string, vector<shaderPathDefinition>> shaderPaths;
@@ -46,6 +51,10 @@ namespace PopiEngine::Importer
 	extern map<string, texturePathDefinition> texturePaths;
 
 	extern map<string, meshPathDefinition> meshPaths;
+
+	extern map<string, scenePathDefinition> scenePaths;
+
+
 
 	extern Scene currentScene;
 
@@ -56,4 +65,6 @@ namespace PopiEngine::Importer
 	map<string, texturePathDefinition> ImportTextures();
 	
 	map<string, meshPathDefinition> ImportMeshes();
+
+	map<string, scenePathDefinition> ImportScenes();
 }

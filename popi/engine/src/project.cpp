@@ -34,6 +34,9 @@ using std::string, std::runtime_error, std::format, std::ifstream, std::stringst
 
 namespace PopiEngine {
 
+    
+
+    std::shared_ptr<EntityManager> entityManagerRef; //PLEASE make entity manager a singlton 
 
 
     void Project::OnStart(){
@@ -50,7 +53,8 @@ namespace PopiEngine {
 
 		//Initialize cores
         graphicsCore = new GraphicsCore(settings.editorMode);
-		entityManager = new EntityManager(); //Initiaize Before UI Core
+		entityManager = std::make_shared<EntityManager>(); //Initiaize Before UI Core
+        entityManagerRef = entityManager; //this is a sin against c++ programing
         uiCore = new UICore(graphicsCore->GetWindow());
 		Importer::currentScene = Scene(); //Initialize the current scene
 
@@ -64,51 +68,8 @@ namespace PopiEngine {
         auto defaultShaderProgram = InitalizeShader("unlit");
         
         //Link the camera to the entity manager
-        auto cameraEntity = entityManager->InstatiateEntity("Main Camera");
-        cameraEntity->AttachCamera();
-        cameraEntity->AttachTransform();
-		graphicsCore->LinkCamera(cameraEntity);
 
-		Texture test = Texture("Planks", TextureType::DIFFUSE);
-        vector<Texture> textures = { test };
-        auto meshId = graphicsCore->LinkMesh(CreateCube("unlit", textures));
-
-        auto testEntity = entityManager->InstatiateEntity("Cube");
-        testEntity->AttachTransform();
-        testEntity->AttachMesh(meshId);
-        Texture test2 = Texture("Metal plates 2", TextureType::DIFFUSE);
-        vector<Texture> textures2 = { test2 };
-        auto meshId2 = graphicsCore->LinkMesh(CreateCube("unlit",textures2));
-        auto testEntity2 = entityManager->InstatiateEntity("Cube Long");
-		auto pos = std::make_shared<Transform>(
-            glm::vec3(2.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f,0.0f,45.0f),
-            glm::vec3(0.5f,0.5f,2.0f));
-        testEntity2->AttachTransform(pos);
-        testEntity2->AttachMesh(meshId2);
-
-		Texture test3 = Texture("Bush Outer Violet", TextureType::DIFFUSE);
-        
-		vector<Texture> textures3 = { test3 };
-        auto meshId3 = graphicsCore->LinkMesh(std::make_shared<Mesh>("AzaleaBushViolet", textures3, "unlit"));
-		auto testEntity3 = entityManager->InstatiateEntity("Azelea Bush");
-        testEntity3->AttachTransform(
-            std::make_shared<Transform>(
-                glm::vec3(0.0f, 0.0f, -2.0f),
-                glm::vec3(0.0f, 0.0f, 0.0f),
-				glm::vec3(1.0f, 1.0f, 1.0f)));
-		testEntity3->AttachMesh(meshId3);
-        testEntity3->meshRenderer->isTransparent = true;
-
-        auto meshId4 = graphicsCore->LinkMesh(CreatePlane("unlit"));
-		auto testEntity4 = entityManager->InstatiateEntity("Plane");
-        testEntity4->AttachTransform(
-            std::make_shared<Transform>(
-                glm::vec3(0.0f, -1.0f, 0.0f),
-				glm::vec3(0.0f, 0.0f, 0.0f),
-				glm::vec3(10.0f, 1.0f, 10.0f)));
-		testEntity4->AttachMesh(meshId4);
-        //Mesh cube = Mesh()
+        currentScene.Load(scenePaths.begin()->second.path);
      
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f); // Use float literals to avoid warnings
 

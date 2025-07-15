@@ -37,6 +37,7 @@ namespace PopiEngine::UI
 
 		//Menu Bar Menus
 		void FileMenu();
+		bool showSaveBox = false; // Flag to show/hide save dialog
 		void EditMenu();
 		void InspectorMenu();
 		void AddComponentMenu();
@@ -49,6 +50,7 @@ namespace PopiEngine::UI
 		void TextureMenu();
 		void ShaderMenu();
 		void MeshMenu();
+		void SceneMenu();
 
 		//Resource Preview menu
 		void ResourcePreviewMenu();

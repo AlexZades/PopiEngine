@@ -157,6 +157,7 @@ namespace PopiEngine::ECS {
 		entities.erase(std::remove(entities.begin(), entities.end(), entity), entities.end());
 		
 		entity.reset(); 
+		
 	}
     void EntityManager::OnNewScene()  
     {  
@@ -166,10 +167,22 @@ namespace PopiEngine::ECS {
             DestroyEntity(entity);  
         }  
         entities.clear();  
+		activeGraphicsCore->ResetCamera(); // Reset the active camera in the graphics core
 		InstatiateEntity("Main Camera")->AttachCamera(); // Always a default camera entity
-        Importer::currentScene = Scene(); // Reset the current scene  
+        
       
     }
+	void EntityManager::OnSceneLoad()
+	{
+		LogNormal("Preparing for scene load");
+		// Clear all entities in the current scene
+		for (const auto& entity : entities) {
+			DestroyEntity(entity);
+		}
+		entities.clear();
+		activeGraphicsCore->ResetCamera();
+
+	}
 #pragma endregion
 
 }

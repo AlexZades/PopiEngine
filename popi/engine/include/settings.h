@@ -14,7 +14,7 @@ static const char* PRIMATIVE_PLANE = "plane";
 static const char* PRIMATIVE_PYRAMID = "pyramid";
 
 //Names of default shaders
-static const char* UNLIT_SHADER = "unlit";
+static string UNLIT_SHADER = "unlit";
 
 //Internal file format versions
 static const int SCENE_VERSION = 1;

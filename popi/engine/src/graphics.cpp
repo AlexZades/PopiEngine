@@ -292,8 +292,14 @@ namespace PopiEngine::Graphics
 
     }
 
+    //Since graphics core keeps a pointer to the object we need to clear it
+    void GraphicsCore::ResetCamera()
+    {
+		activeCamera.reset(); 
+    }
+
     std::shared_ptr<Entity> GraphicsCore::GetActiveCamera() {
-        if (activeCamera->camera == nullptr) {
+        if (activeCamera == nullptr || activeCamera->camera == nullptr) {
             for(const auto& entity : entities) {
                 if (entity.get()->GetActiveComponents() & ActiveComponents::CAMERA) {
                     activeCamera = entity;

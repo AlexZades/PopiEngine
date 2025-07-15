@@ -12,6 +12,7 @@ using namespace PopiEngine::UI;
 //Container for main program of popi engine
 //Modify project.cpp to change the behavior
 namespace PopiEngine {
+	extern std::shared_ptr<EntityManager> entityManagerRef;
 	class Project {
 	public:
 		Project() = default;
@@ -26,7 +27,7 @@ namespace PopiEngine {
 
 		UICore* uiCore;
 		GraphicsCore* graphicsCore;
-		EntityManager* entityManager;
+		std::shared_ptr <EntityManager> entityManager;
 		Settings settings = Settings();
 	};
 	

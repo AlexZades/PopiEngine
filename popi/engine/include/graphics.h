@@ -153,9 +153,11 @@ namespace PopiEngine::Graphics
 		bool editorMode;
 
 		void InitializeGL();
+		//Add some functions to release memeory from meshes and textures
 		void SetUiCore(UICore* _uiCore);
 		void Clear();
 		void Draw();
+		void ResetCamera();
 
 		std::shared_ptr<Entity> GetActiveCamera();
 

@@ -9,6 +9,7 @@
 #include <utils.h>
 #include <scene.h>
 #include <json.hpp>
+#include <project.h>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 namespace fs = std::filesystem;
@@ -22,11 +23,13 @@ using json = nlohmann::json;
 /// </summary>
 namespace PopiEngine::Importer
 {
-	Scene currentScene; //This is bad fix later 
+	
 
 	map<string, vector<shaderPathDefinition>> shaderPaths = ImportShaders();
 	map<string, texturePathDefinition> texturePaths = ImportTextures();
 	map<string, meshPathDefinition> meshPaths = ImportMeshes();
+	map<string, scenePathDefinition> scenePaths = ImportScenes();
+	Scene currentScene; //This is bad fix later 
 	/// <summary>
 	/// Loads shader paths from the resources/shaders directory.
 	/// 
@@ -43,7 +46,7 @@ namespace PopiEngine::Importer
 		const string fragmentExtn = ".frag";
 		const string vertexExtn = ".vert";
 
-		std::cout << "Importing shaders from " << RESOURCES_SHADERS << std::endl;
+		LogNormal(format("Importing shaders from {}", RESOURCES_SHADERS));
 		//Get file paths,and names of the shaders. Then determine their type based on the extension.
 		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_SHADERS)) {
 
@@ -87,6 +90,7 @@ namespace PopiEngine::Importer
 
 	}
 
+
 	map<string, texturePathDefinition> ImportTextures() {
 
 		map<string, texturePathDefinition> texturePaths;
@@ -94,7 +98,7 @@ namespace PopiEngine::Importer
 		//Image file extensions
 		const string validExtentions[] = { ".png", ".jpg"};
 
-		std::cout << "Importing textures from " << RESOURCES_TEXTURES << std::endl;
+		LogNormal(format("Importing textures from {}", RESOURCES_TEXTURES));
 
 		//Get file paths,and names of the textures. 
 		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_TEXTURES)) {
@@ -131,7 +135,7 @@ namespace PopiEngine::Importer
 
 		const string validExtentions[] = { ".obj"};
 
-		std::cout << "Importing models from " << RESOURCES_MESHES << std::endl;
+		LogNormal(format("Importing meshes from {} " ,RESOURCES_MESHES));
 
 		//Get file paths,and names of the meshes. 
 		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_MESHES)) {
@@ -156,13 +160,42 @@ namespace PopiEngine::Importer
 						meshPaths[name] = meshPathDef;
 					}
 					else {
-						LogWarning(format("Texture Importer: Texture {} already exists, skipping import.", name));
+						LogWarning(format("Mesh {} already exists, skipping import.", name));
 					}
 				}
 			}
 		}
 		
 		return meshPaths;
+	}
+
+	map<string, scenePathDefinition> ImportScenes()
+	{
+		map<string, scenePathDefinition> scenes;
+
+		const string validExtentions[] = { ".popisc" };
+
+		std::cout << "Importing scenes from " << RESOURCES_SCENES << std::endl;
+
+		//Get file paths,and names of the meshes. 
+		for (const auto& p : fs::recursive_directory_iterator(RESOURCES_SCENES)) {
+			string path = p.path().string();
+			string ext = p.path().extension().string();
+			string name = p.path().stem().string();
+			for (const auto& validExt : validExtentions) {
+				if (ext == validExt) {
+					//If the extension is valid, add the mesh to the map
+					scenePathDefinition scenePathDef = { path };
+					if (scenes.find(name) == scenes.end()) {
+						scenes[name] = scenePathDef;
+					}
+					else {
+						LogWarning(format("Scene Importer: Scene {} already exists, skipping import.", name));
+					}
+				}
+			}
+		}
+		return scenes;
 	}
 
 	void ObjLoader(meshPathDefinition* meshDefinition) {
@@ -219,14 +252,41 @@ namespace PopiEngine::Importer
 	}
 	
 	
-	void Scene::Load() {
+	void Scene::Load(string path) {
+		entityManagerRef->OnSceneLoad();
+		LogNormal(format("Loading scene from path: {}", path));
+		std::ifstream file(path);
+		if (!file.is_open()) {
+			LogError(format("Failed to open scene file: {}", path));
+			return;
+		}
+		json sceneJson;
+		try {
+			file >> sceneJson;
+			file.close();
+			fromJson(sceneJson);
+			LogNormal(format("Scene {} loaded successfully.", name));
+		}
+		catch (const std::exception& e) {
+			LogError(format("Failed to load scene from file {}: {}", path, e.what()));
+			return;
+		}
 		LogNormal("Loading scene...");
+	}
+
+	void Scene::New()
+	{
+	this->sceneEntities = entities;
+	LogNormal("Creating new scene...");
+	entityManagerRef->OnNewScene();
+	name = "scene";
+	LogNormal("New scene created successfully.");
 	}
 
 	void Scene::Save() {
 		this->sceneEntities = entities;
 		json sceneJson = toJson();	
-		string scenePath = format("{}/{}.popi", RESOURCES_SCENES, name);
+		string scenePath = format("{}/{}.popisc", RESOURCES_SCENES, name);
 		LogNormal("Saving scene...");
 		std::ofstream file(scenePath);
 		if (file.is_open()) {
@@ -237,7 +297,9 @@ namespace PopiEngine::Importer
 		else {
 			LogError(format("Failed to save scene to {}", scenePath));
 		}
-		
+
+		LogNormal("Scene saved successfully. Refreshng resources");
+		scenePaths = ImportScenes(); //Refresh the scene paths after saving
 	}
 
 	json Scene::toJson() {
@@ -248,7 +310,7 @@ namespace PopiEngine::Importer
     vector<json> entitiesJson;
 
     if (!entities.empty()) {  
-        // Serialize each entity
+        // Serialize each entity 
         for (const auto& entity : sceneEntities) {
             json entityJson;  
             entityJson["name"] = entity->name; 
@@ -256,7 +318,7 @@ namespace PopiEngine::Importer
 
             ActiveComponents activeComponents = entity->GetActiveComponents();
             
-            // Check each component using bitwise AND operations
+            // Check each component using bitwise AND operations (active components is a bit mask)
             if (activeComponents & ActiveComponents::TRANSFORM) {
                 std::shared_ptr<Transform> transform = entity->transform;	
                 if (transform != nullptr) {
@@ -283,8 +345,6 @@ namespace PopiEngine::Importer
                 }
             }
             
-          
-            // Add other components when you uncomment them
             /*
             if (activeComponents & ActiveComponents::DIRECTIONAL_LIGHT) {
                 std::shared_ptr<DirectionalLight> directionalLight = entity->directionalLight;
@@ -333,9 +393,56 @@ namespace PopiEngine::Importer
     return j;
 }
 
-	void Scene::FromJson(const json& j) {
-
+	void Scene::fromJson(const json& j) {
+		int version = j["format version"];
+		if (version != SCENE_VERSION) {
+			LogError(format("Scene file is outdated (ver {}, may not load correctly", version));
+		}
 		LogNormal("Loading scene from JSON...");
+
+		name = j["scene"]["name"].get<string>();
+		LogNormal(format("Loaing Scene name: {}", name));
+		vector<json> entitiesJson = j["scene"]["entities"].get<vector<json>>();
+
+		for (const auto& entityJson : entitiesJson) {
+			
+			LogNormal(format("Deserializing entity: {}", entityJson.dump(4)));
+
+			string ename = entityJson["name"].get<string>();
+
+            auto entity = entityManagerRef.get()->InstatiateEntity(ename);
+			if (entityJson.contains("transform")&& entityJson["transform"].is_object()) {
+				LogNormal(format("Deserializing transform for entity: {}", ename));
+				Transform transform;
+				FromJson(entityJson["transform"], transform);
+				entity->AttachTransform(std::make_shared<Transform>(transform));
+			}
+			if (entityJson.contains("mesh_renderer") && entityJson["mesh_renderer"].is_object()) {
+				LogNormal(format("Deserializing mesh renderer for entity: {}", ename));
+				MeshRenderer meshRenderer;
+				FromJson(entityJson["mesh_renderer"], meshRenderer);
+				entity->AttachMesh(std::make_shared<MeshRenderer>(meshRenderer));
+			}
+			if (entityJson.contains("directional_light") && entityJson["directional_light"].is_object()) {
+				LogNormal(format("Deserializing directional light for entity: {}", ename));
+				DirectionalLight directionalLight;
+				FromJson(entityJson["directional_light"], directionalLight);
+				entity->AttachDirectionalLight(std::make_shared<DirectionalLight>(directionalLight));
+			}
+			if (entityJson.contains("point_light") && entityJson["point_light"].is_object()) {
+				LogNormal(format("Deserializing point light for entity: {}", ename));
+				PointLight pointLight;
+				FromJson(entityJson["point_light"], pointLight);
+				entity->AttachPointLight(std::make_shared<PointLight>(pointLight));
+			}
+			if (entityJson.contains("camera") && entityJson["camera"].is_object()) {
+				LogNormal(format("Deserializing camera for entity: {}", ename));
+				ECS::Camera camera;
+				FromJson(entityJson["camera"], camera);
+				entity->AttachCamera(std::make_shared<ECS::Camera>(camera));
+			}
+		}
+
 	}
 
 #pragma region Component Json Serializers
@@ -356,6 +463,7 @@ namespace PopiEngine::Importer
 	void ToJson(json& j,  MeshRenderer &meshRenderer) {
 		string meshName = "";
 		string shaderProgramName = UNLIT_SHADER;
+		LogNormal(shaderProgramName);
 		//Maybe rewrite this to use a struct to handle the texture data
 		vector<string> textureNames;
 		vector<TextureType> textureTypes;
@@ -363,9 +471,12 @@ namespace PopiEngine::Importer
 
 		if (mesh) {
 			meshName = mesh.get()->name;
-			shaderProgramName = mesh.get()->shaderProgram.get()->GetId(); //Lol c++ 
+
+			//we need to fix this by storing the shader name on the mesh
+			//shaderProgramName = "shaderPrograms.."; //Lol c++ 
 			for(const auto& texture : mesh.get()->textures) {
-				textureNames.push_back(texture.path);
+				textureNames.push_back(texture.name);
+				textureTypes.push_back(texture.type);
 			}
 		}
 		j = json{
@@ -379,11 +490,13 @@ namespace PopiEngine::Importer
 	void FromJson(const json& j, MeshRenderer& meshRenderer) {
 		string meshName = j["name"];
 		string shaderProgramName = j["shaderProgramName"];
+		
 		vector<string> textureNames = j["textures"].get<vector<string>>();
 		vector<TextureType> textureTypes = j["textureTypes"].get<vector<TextureType>>();
 		//We rebuild the textures
 		vector<Texture> textures;
 		for (int i = 0; i < textureNames.size(); i++) {
+			
 			if (texturePaths.find(textureNames[i]) != texturePaths.end()) {
 				textures.push_back(Texture(textureNames[i], textureTypes[i]));
 			}

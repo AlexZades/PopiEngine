@@ -9,7 +9,7 @@
 #include <components.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <importer.h>
-
+#include <project.h>
 using namespace PopiEngine::Logging;
 using namespace PopiEngine::ECS;
 using namespace PopiEngine::Graphics;
@@ -72,20 +72,56 @@ namespace PopiEngine::UI
 			}
 		}
 		ImGui::EndMenuBar();
+
+		//File bar dialogs (save dialog)
+		if (showSaveBox)
+			ImGui::OpenPopup("SaveDialog");
+		if (ImGui::BeginPopup("SaveDialog"))
+		{
+			//Imgui doesnt like strings and to use the nativly
+			//I need to setup a callback so im doing this hacky stuff
+			static char saveName[128];
+			strncpy(saveName, currentScene.name.c_str(), sizeof(saveName) - 1);
+			saveName[sizeof(saveName) - 1] = '\0';
+
+			ImGui::InputText("Scene Name", saveName, IM_ARRAYSIZE(saveName));
+			currentScene.name = saveName;
+			if (ImGui::Button("Save")) {
+				 
+				currentScene.Save();
+				ImGui::CloseCurrentPopup();
+				showSaveBox = false; // Hide the save dialog after saving
+			} ImGui::SameLine();
+			if (ImGui::Button("Cancel")) {
+				ImGui::CloseCurrentPopup();
+				showSaveBox = false;
+			}
+			ImGui::EndPopup();
+
+		}
 	}
 
 	void UICore::FileMenu() {
 		if (ImGui::MenuItem("New Scene")) {
-			
+			currentScene.New(); 
 		}
-		if (ImGui::MenuItem("Open Scene")) 
-		{
-			
-		}
+		if (ImGui::BeginMenu("Load Scene"))
+			{
+				for (const auto& [key, value] : scenePaths)
+				{
+					if (ImGui::MenuItem(key.c_str()))
+					{
+						currentScene.Load(value.path);
+					}
+				}
+				ImGui::EndMenu();
+			}
+		
 		if (ImGui::MenuItem("Save Scene"))
 		{
-			currentScene.Save();
+			showSaveBox = true; // Show the save dialog when the menu item is clicked
 		}
+		
 	}
 	
 	void UICore::EditMenu() {
@@ -153,6 +189,9 @@ namespace PopiEngine::UI
 	{
 		if (ImGui::Button("Add Component"))
 			ImGui::OpenPopup("Add Component");
+		ImGui::SameLine();
+		if (ImGui::Button("Delete"))
+			entityManagerRef->DestroyEntity(entities[selectedEntityIndex]);
 		if (ImGui::BeginPopup("Add Component"))
 		{
 			if (ImGui::MenuItem("Transform"))
@@ -234,6 +273,11 @@ namespace PopiEngine::UI
 		ImGuiTabBarFlags tab_bar_flags = ImGuiTabBarFlags_None;
 		if (ImGui::BeginTabBar("Resources", tab_bar_flags))
 		{
+			if (ImGui::BeginTabItem("Scenes"))
+			{
+				SceneMenu();
+				ImGui::EndTabItem();
+			}
 			if (ImGui::BeginTabItem("Textures"))
 			{
 
@@ -250,6 +294,7 @@ namespace PopiEngine::UI
 				ShaderMenu();
 				ImGui::EndTabItem();
 			}
+
 			ImGui::EndTabBar();
 		}
 		ImGui::End();
@@ -280,6 +325,16 @@ namespace PopiEngine::UI
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
 		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
 		for (const auto& [key, path] : meshPaths) {
+			ImGui::Text(key.c_str());
+		}
+		ImGui::EndChild();
+	}
+
+	void UICore::SceneMenu()
+	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+		ImGui::BeginChild("ChildL", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y), ImGuiChildFlags_None, window_flags);
+		for (const auto& [key, path] : scenePaths) {
 			ImGui::Text(key.c_str());
 		}
 		ImGui::EndChild();
@@ -361,7 +416,7 @@ namespace PopiEngine::UI
 		ImGui::Begin("Heirachy", &editorTools, ImGuiWindowFlags_MenuBar);
 
 		ImGui::BeginChild("Entites");
-		ImGui::BeginListBox("##listbox"); {
+		ImGui::BeginListBox("##listbox", ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y)); {
 			for (int i = 0; i < entities.size(); i++) {
 				const auto& entity = entities[i];
 				const bool is_selected = (selectedEntityIndex == i);

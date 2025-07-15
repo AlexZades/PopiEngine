@@ -65,6 +65,9 @@ namespace PopiEngine::ECS {
 		void DestroyEntity(std::shared_ptr<Entity> entity);
 
 		void OnNewScene();
+		void OnSceneLoad();
+
+
     };
 
     

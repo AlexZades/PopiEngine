@@ -1,0 +1,98 @@
+{
+    "format version": 1,
+    "scene": {
+        "entities": [
+            {
+                "camera": {
+                    "defaultUp": [
+                        0.0,
+                        1.0,
+                        0.0
+                    ],
+                    "farPlane": 100.0,
+                    "fov": 70.0,
+                    "mode": 0,
+                    "nearPlane": 0.10000000149011612,
+                    "orthographicSize": 10.0
+                },
+                "name": "Main Camera",
+                "transform": {
+                    "position": [
+                        -5.0,
+                        5.0,
+                        5.0
+                    ],
+                    "rotation": [
+                        -45.0,
+                        -45.0,
+                        0.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "mesh_renderer": {
+                    "isTransparent": false,
+                    "name": "cube",
+                    "shaderProgramName": "unlit",
+                    "textureTypes": [],
+                    "textures": []
+                },
+                "name": "Cube",
+                "transform": {
+                    "position": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "scale": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ]
+                }
+            },
+            {
+                "mesh_renderer": {
+                    "isTransparent": false,
+                    "name": "plane",
+                    "shaderProgramName": "unlit",
+                    "textureTypes": [
+                        0
+                    ],
+                    "textures": [
+                        "plane"
+                    ]
+                },
+                "name": "Plane",
+                "transform": {
+                    "position": [
+                        0.0,
+                        -1.0,
+                        0.0
+                    ],
+                    "rotation": [
+                        0.0,
+                        0.0,
+                        0.0
+                    ],
+                    "scale": [
+                        10.0,
+                        1.0,
+                        10.0
+                    ]
+                }
+            }
+        ],
+        "name": "default"
+    }
+}
