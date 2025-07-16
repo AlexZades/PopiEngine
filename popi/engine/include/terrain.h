@@ -9,16 +9,16 @@ namespace PopiEngine::Terrain
 	struct GeneratorParams {
 		float frequency = 0.01f; // Frequency of the noise
 		int octaves = 4; // Number of octaves for the noise
-		float lacunarity = 2.0f; // Lacunarity for the noise
-		float persistence = 0.5f; // Persistence for the noise
-		float heightScale = 10.0f; // Scale of the height
+		float lacunarity = 2.0f; 
+		float persistence = 0.5f;
+		float heightScale = 10.0f; 
 	};
 
 	struct TerrainFeatures {
-		int xSize = 100; // Size of the terrain in the x direction
-		int ySize = 100; // Size of the terrain in the y direction
+		int xSize = 100; //Size in units
+		int ySize = 100;
 
-		int chunkSize = 128; // Size of each chunk
+		int chunkSize = 128; //Vertex grid determiner
 	};
 
 	class TerrainGenerator {
