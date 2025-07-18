@@ -159,6 +159,7 @@ namespace PopiEngine::Graphics
 		void SetUiCore(UICore* _uiCore);
 		void Clear();
 		void Draw();
+		void DrawEditorGizmos();
 		void ResetCamera();
 
 		std::shared_ptr<Entity> GetActiveCamera();

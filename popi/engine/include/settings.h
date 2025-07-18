@@ -16,6 +16,11 @@ static const char* PRIMATIVE_PYRAMID = "pyramid";
 //Names of default shaders
 static string UNLIT_SHADER = "unlit";
 
+
+//Names of gizmoTextures
+string static const GIZMO_POINTLIGHT = "pointLight";
+string static const GIZMO_SCRIPT = "script";
+string static const GIZMO_DIRECTIONAL_LIGHT = "directionalLight";
 //Internal file format versions
 static const int SCENE_VERSION = 1;
 namespace PopiEngine  
