@@ -1,8 +1,8 @@
 <h1>Poppi Engine</h1>
 <p>Poppi Engine is a simple 3D game engine built with OpnGL and C++. 
-It can be used to create games and other 3D applications.</p>>
+It can be used to create games and other 3D applications.</p>
 
-<h2>Features</h2>>
+<h2>Features</h2>
 <ul>
   <li>Editor Window</li>
   <li>Entity-Component System (ECS)</li>
